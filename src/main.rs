@@ -81,7 +81,6 @@ fn main() {
             idx: -f_num,
             file_path: read_path
         });
-        // ingested_files.push(fs::read_to_string(read_path).expect("Could not read file"));
     }
 
     let mut ingested_files = Vec::<String>::new();
