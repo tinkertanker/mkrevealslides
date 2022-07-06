@@ -49,6 +49,10 @@ impl Ord for FileEntry {
 
 impl Eq for FileEntry {}
 
+fn is_markdown_file(fp: &Path) -> bool {
+    fp.extension().unwrap_or_default() == "md"
+}
+
 /// Fetches the string of a file that comes before some seperator (in this case, the underscore)
 /// This ignores directories
 /// For example, if we have files:
@@ -78,6 +82,11 @@ pub fn fetch_file_indices<P: AsRef<Path>>(dir: P) -> Result<Vec<(String, PathBuf
 
         if !p.file_type()?.is_file() {
             warn!("Skipping {} because it is not a file", path.display());
+            continue;
+        }
+
+        if !is_markdown_file(&path) {
+            warn!("Skipping {} because it is not a markdown file", path.display());
             continue;
         }
 

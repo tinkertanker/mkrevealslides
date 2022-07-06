@@ -7,12 +7,13 @@ Automatically generates reveal.js slides given markdown files
 In rough order of priority
 
 - [x] Better UI
-- [ ] Support markdown images
+- [x] Check if the file is actually a `.md` file
 - [ ] Superior error handling that does not involve CRASHING the program
 - [ ] Configuration file support
+- [ ] Support markdown images
 - [ ] Support slide 1a, 1b etc.
 - [ ] Generate zip file with revealJS deps
-- [ ] Check if the file is actually a `.md` file
+- [ ] Automatically download revealJS if not present 
 - [ ] Support revealJS animations
 
 
