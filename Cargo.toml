@@ -5,6 +5,10 @@ edition = "2021"
 license = "GPL-3.0-or-later"
 description = "Creates reveal.js presentations automatically from markdown files"
 authors = ["Robert <xiurobert@gmail.com>"]
+homepage = "https://github.com/tinkertanker/mkrevealslides"
+repository = "https://github.com/tinkertanker/mkrevealslides"
+readme = "README.md"
+keywords = ["markdown", "reveal.js", "presentation"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
