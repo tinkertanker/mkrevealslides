@@ -1,46 +1,8 @@
 use std::{fs, io};
 use std::process::exit;
 use tera::{Tera, Context};
+use mkrevealslides::{create_dir_if_not_exists, FileEntry};
 
-/// Creates a directory if it does not
-/// already exist
-///
-/// # Arguments
-/// The path to the directory to create
-///
-/// # Errors
-/// Returns an error if the directory could not be created (not because it already exists)
-fn create_dir_if_not_exists(path: &str) -> Result<(), io::Error> {
-    if fs::metadata(path).is_err() {
-        fs::create_dir_all(path)?
-    }
-    Ok(())
-}
-
-struct FileEntry {
-    idx: i32,
-    file_path: String
-}
-
-impl PartialOrd for FileEntry {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.idx.cmp(&other.idx))
-    }
-}
-
-impl PartialEq for FileEntry {
-    fn eq(&self, other: &Self) -> bool {
-        self.idx == other.idx
-    }
-}
-
-impl Ord for FileEntry {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.idx.cmp(&other.idx)
-    }
-}
-
-impl Eq for FileEntry {}
 
 fn main() {
     let tera = match Tera::new("templates/**/*.html") {
