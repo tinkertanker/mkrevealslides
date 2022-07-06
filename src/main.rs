@@ -77,27 +77,15 @@ fn main() -> Result<(), AppError> {
         _ => Level::TRACE,
     };
     tracing_subscriber::fmt().with_max_level(log_level).init();
-    let config_file = matches.get_one::<PathBuf>("config_file");
+    let config_fp = matches.get_one::<PathBuf>("config_file");
 
-    let mut files_to_process = Vec::new();
-    let mut presentation_title = String::new();
-    let mut slide_dir = PathBuf::new();
-    let mut output_file = PathBuf::new();
-    let mut template_file = PathBuf::new();
-
-    if let Some(conf_path) = config_file {
+    if let Some(conf_path) = config_fp {
         let conf_contents = fs::read_to_string(conf_path)?;
         let conf: SlideConfig = serde_yaml::from_str(&conf_contents)?;
         debug!("conf: {:?}", conf);
 
-        trace!("config title: {:?}", conf.title);
-        presentation_title = conf.title;
-
-        trace!("config slide_dir: {:?}", conf.slide_dir);
-        slide_dir = PathBuf::from(conf.slide_dir);
-
-
         if let Some(include_files) = conf.include_files {
+            let mut files_to_process =
             trace!("config include_files: {:?}", include_files);
             for (i, include_file) in include_files.iter().enumerate() {
                 let file_path = PathBuf::from(&slide_dir).join(include_file);
@@ -115,21 +103,14 @@ fn main() -> Result<(), AppError> {
             files_to_process = build_proc_pq(entries);
         }
     } else {
-        slide_dir = matches.get_one::<PathBuf>("slide_dir").unwrap().clone();
-        output_file = matches.get_one::<PathBuf>("output_file").unwrap().clone();
-        template_file = matches.get_one::<PathBuf>("template_file").unwrap().clone();
-
-        trace!("No config file given, using default");
-        // Process as per normal
-        let entries = fetch_file_indices(&slide_dir)?;
-        let entries = indices_and_paths_to_entries(entries)?;
-        files_to_process = build_proc_pq(entries);
+        info!("No config file given, using default");
+        let conf: SlideConfig = SlideConfig::proc_args(matches)?;
     }
 
-    debug!("slide_dir: {:?}", &slide_dir);
+    debug!("slide_dir: {:?}", conf);
     debug!("output_file: {:?}", output_file);
     debug!("template_file: {:?}", template_file);
-    debug!("config_file: {:?}", config_file);
+    debug!("config_file: {:?}", config_fp);
 
 
     let presentation_title = "mkrevealslides output".to_string();

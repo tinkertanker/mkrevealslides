@@ -2,6 +2,7 @@ use core::fmt;
 use std::error::Error;
 use std::io;
 use std::num::ParseIntError;
+use crate::conf::ArgumentError;
 use crate::val::ValError;
 
 
@@ -69,6 +70,15 @@ impl From<ValError> for AppError {
         Self {
             message: "Validation Error".to_string(),
             description: err
+        }
+    }
+}
+
+impl From<ArgumentError> for AppError {
+    fn from(err: ArgumentError) -> Self {
+        Self {
+            message: format!("Arg error: {}", err.0),
+            description: err.1
         }
     }
 }

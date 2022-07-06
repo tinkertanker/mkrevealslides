@@ -4,6 +4,7 @@ pub mod error_handling;
 
 use std::{fs};
 use std::collections::BinaryHeap;
+use std::fs::File;
 use std::io::{Error, ErrorKind};
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
@@ -52,6 +53,11 @@ impl Ord for FileEntry {
 }
 
 impl Eq for FileEntry {}
+
+/// Returns just the file paths given a list of FileEntries
+pub fn just_file_paths(entries: &Vec<FileEntry>) -> Vec<PathBuf> {
+    entries.iter().map(|e| e.file_path.clone()).collect()
+}
 
 fn is_markdown_file(fp: &Path) -> bool {
     fp.extension().unwrap_or_default() == "md"
