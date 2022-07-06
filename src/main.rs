@@ -65,6 +65,7 @@ fn main() {
             println!("Warning: Skipping {} because it is not a file", p.path().display());
             continue;
         }
+        // TODO: check if the file ends in .md at least
         let path = p.path();
         let read_path = path.display().to_string();
         let file_name = path.file_stem().expect("Could not get file name").to_str().expect("Could not get file name as string");
