@@ -17,6 +17,31 @@ fn create_dir_if_not_exists(path: &str) -> Result<(), io::Error> {
     Ok(())
 }
 
+struct FileEntry {
+    idx: i32,
+    file_path: String
+}
+
+impl PartialOrd for FileEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.idx.cmp(&other.idx))
+    }
+}
+
+impl PartialEq for FileEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.idx == other.idx
+    }
+}
+
+impl Ord for FileEntry {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.idx.cmp(&other.idx)
+    }
+}
+
+impl Eq for FileEntry {}
+
 fn main() {
     let tera = match Tera::new("templates/**/*.html") {
         Ok(t) => t,
@@ -31,7 +56,7 @@ fn main() {
 
     let inp_dir = fs::read_dir("input").expect("Could not read input directory");
 
-    let mut ingested_files = Vec::<String>::new();
+    let mut files_to_process = std::collections::BinaryHeap::<FileEntry>::new();
 
     for p in inp_dir {
         let p = p.expect("Directory entry could not be read");
@@ -40,12 +65,33 @@ fn main() {
             println!("Warning: Skipping {} because it is not a file", p.path().display());
             continue;
         }
-        let file_name = p.path().display().to_string();
-        println!("Ingesting {}", file_name);
-        ingested_files.push(fs::read_to_string(file_name).expect("Could not read file"));
+        let path = p.path();
+        let read_path = path.display().to_string();
+        let file_name = path.file_stem().expect("Could not get file name").to_str().expect("Could not get file name as string");
+
+        let fp_splice = file_name.split("_");
+
+        let f_num = fp_splice.collect::<Vec<&str>>();
+        let f_num = f_num.first().expect("Could not get file number");
+        let f_num = f_num.parse::<i32>().expect("Could not parse file number");
+
+        // Hack to make a min heap
+        files_to_process.push(FileEntry {
+            idx: -f_num,
+            file_path: read_path
+        });
+        // ingested_files.push(fs::read_to_string(read_path).expect("Could not read file"));
     }
 
-    println!("{:?}", ingested_files.len());
+    let mut ingested_files = Vec::<String>::new();
+    while !files_to_process.is_empty() {
+        let f = files_to_process.pop().expect("Could not pop file from heap");
+        let f = f.file_path;
+        println!("Processing {}", f);
+        let f = fs::read_to_string(f).expect("Could not read file");
+        ingested_files.push(f);
+    }
+
 
     ctx.insert("slide_title", "Generated from rust");
     ctx.insert("ingested_files", &ingested_files);
