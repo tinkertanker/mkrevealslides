@@ -3,7 +3,7 @@ use mkrevealslides::val::*;
 use mkrevealslides::*;
 
 use std::path::PathBuf;
-use clap::{command, ArgAction, Arg, value_parser};
+use clap::{command, ArgAction, Arg, value_parser, ArgGroup};
 use tracing::{debug, info, Level, trace, warn};
 use mkrevealslides::conf::SlideConfig;
 use mkrevealslides::error_handling::AppError;
@@ -29,7 +29,6 @@ fn main() -> Result<(), AppError> {
         .arg(
             Arg::new("slide_dir")
                 .help("The directory containing the slides")
-                .required(true)
                 .value_parser(value_parser!(PathBuf))
         )
         .arg(
@@ -37,20 +36,24 @@ fn main() -> Result<(), AppError> {
                 .short('o')
                 .long("output-file")
                 .help("The file to output to")
-                .required(true)
-                .default_value("output/index.html")
                 .value_parser(value_parser!(PathBuf))
-
         )
-        .arg(Arg::new("template_file")
+        .arg(
+            Arg::new("template_file")
             .short('t')
             .long("template-file")
             .help("The template file to generate the slides from")
-            .required(true)
             .takes_value(true)
             .value_parser(value_parser!(PathBuf))
         )
-        .arg(Arg::new("config_file")
+        .group(
+            ArgGroup::new("gen_options")
+                .required(false)
+                .args(&["slide_dir", "output_file", "template_file"])
+                .conflicts_with("config_file")
+        )
+        .arg(
+            Arg::new("config_file")
             .short('c')
             .long("conf")
             .help("The config file to read")
@@ -74,35 +77,25 @@ fn main() -> Result<(), AppError> {
         _ => Level::TRACE,
     };
     tracing_subscriber::fmt().with_max_level(log_level).init();
-    let mut slide_dir = matches.get_one::<PathBuf>("slide_dir").unwrap().clone();
-    let output_file = matches.get_one::<PathBuf>("output_file");
-    let template_file = matches.get_one::<PathBuf>("template_file").unwrap();
     let config_file = matches.get_one::<PathBuf>("config_file");
 
-    debug!("slide_dir: {:?}", slide_dir);
-    debug!("output_file: {:?}", output_file);
-    debug!("template_file: {:?}", template_file);
-    debug!("config_file: {:?}", config_file);
-
-    let output_file = output_file.unwrap();
-
-    let mut presentation_title = "mkrevealslides output".to_string();
-    let mut files_to_process = Vec::<FileEntry>::new();
+    let mut files_to_process = Vec::new();
+    let mut presentation_title = String::new();
+    let mut slide_dir = PathBuf::new();
+    let mut output_file = PathBuf::new();
+    let mut template_file = PathBuf::new();
 
     if let Some(conf_path) = config_file {
-        // Only config if a config file is given
         let conf_contents = fs::read_to_string(conf_path)?;
         let conf: SlideConfig = serde_yaml::from_str(&conf_contents)?;
         debug!("conf: {:?}", conf);
-        if let Some(title) = conf.title {
-            trace!("config title: {:?}", title);
-            presentation_title = title;
-        }
 
-        if let Some(configured_slide_dir) = conf.slide_dir {
-            trace!("config slide_dir: {:?}", configured_slide_dir);
-            slide_dir = PathBuf::from(configured_slide_dir);
-        }
+        trace!("config title: {:?}", conf.title);
+        presentation_title = conf.title;
+
+        trace!("config slide_dir: {:?}", conf.slide_dir);
+        slide_dir = PathBuf::from(conf.slide_dir);
+
 
         if let Some(include_files) = conf.include_files {
             trace!("config include_files: {:?}", include_files);
@@ -117,19 +110,31 @@ fn main() -> Result<(), AppError> {
             }
         } else {
             // todo: clean up code duplication
-            let entries = fetch_file_indices(slide_dir)?;
+            let entries = fetch_file_indices(&slide_dir)?;
             let entries = indices_and_paths_to_entries(entries)?;
             files_to_process = build_proc_pq(entries);
         }
-
     } else {
+        slide_dir = matches.get_one::<PathBuf>("slide_dir").unwrap().clone();
+        output_file = matches.get_one::<PathBuf>("output_file").unwrap().clone();
+        template_file = matches.get_one::<PathBuf>("template_file").unwrap().clone();
+
         trace!("No config file given, using default");
         // Process as per normal
-        let entries = fetch_file_indices(slide_dir)?;
+        let entries = fetch_file_indices(&slide_dir)?;
         let entries = indices_and_paths_to_entries(entries)?;
         files_to_process = build_proc_pq(entries);
-
     }
+
+    debug!("slide_dir: {:?}", &slide_dir);
+    debug!("output_file: {:?}", output_file);
+    debug!("template_file: {:?}", template_file);
+    debug!("config_file: {:?}", config_file);
+
+
+    let presentation_title = "mkrevealslides output".to_string();
+    let files_to_process = Vec::<FileEntry>::new();
+
     let slide_contents = read_files_to_string(files_to_process)?;
     let output_content = gen_output_content(template_file,
                                             &presentation_title,
