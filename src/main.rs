@@ -76,7 +76,7 @@ fn main() {
     let entries = indices_and_paths_to_entries(entries).expect("Could not parse indices and paths");
     let files_to_proc = build_proc_pq(entries);
     let file_contents = read_files_to_string(files_to_proc).expect("Could not read files");
-    let output_content = gen_output_content(matches.value_of("template_file").unwrap(), file_contents).expect("Could not generate html");
+    let output_content = gen_output_content(matches.value_of("template_file").unwrap(), "mkrevealslides output", file_contents).expect("Could not generate html");
     fs::write(format!("{}/index.html", matches.value_of("output_dir").unwrap()), output_content).expect("Could not write output file");
 
 }

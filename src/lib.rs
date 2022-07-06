@@ -1,3 +1,5 @@
+mod conf;
+
 use std::{fs};
 use std::collections::BinaryHeap;
 use std::io::{Error, ErrorKind};
@@ -169,6 +171,7 @@ pub fn read_files_to_string(files: Vec<FileEntry>) -> Result<Vec<String>, Error>
 /// # Arguments
 /// * `included_slides` - The vector of strings, each string being the contents of a slide
 /// * `input_template_path` - The path to the input template
+/// * `presentation_title` - The title of the presentation
 ///
 /// # Returns
 /// A string, the rendered template
@@ -176,11 +179,11 @@ pub fn read_files_to_string(files: Vec<FileEntry>) -> Result<Vec<String>, Error>
 /// # Errors
 /// Returns an error if the template could not be read
 /// Returns an error if the template could not be rendered
-pub fn gen_output_content<P: AsRef<Path>>(input_template_path: P, included_slides: Vec<String>) -> Result<String, Error> {
+pub fn gen_output_content<P: AsRef<Path>>(input_template_path: P, presentation_title: &str, included_slides: Vec<String>) -> Result<String, Error> {
     trace!("Reading template: {}", input_template_path.as_ref().display());
     trace!("Num slides: {}", included_slides.len());
     let mut ctx = Context::new();
-    ctx.insert("slide_title", "mkrevealslides Generated");
+    ctx.insert("slide_title", presentation_title);
     ctx.insert("ingested_files", &included_slides);
     let inp_template = fs::read_to_string(input_template_path)?;
     trace!("Template read. File size: {}B", inp_template.len());
