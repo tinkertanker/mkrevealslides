@@ -1,70 +1,82 @@
-use std::{fs, io};
-use std::process::exit;
-use tera::{Tera, Context};
-use mkrevealslides::{create_dir_if_not_exists, FileEntry};
+use std::{fs};
+use mkrevealslides::{build_proc_pq, create_dir_if_not_exists, fetch_file_indices, gen_output_content, indices_and_paths_to_entries, read_files_to_string};
 
+use std::path::PathBuf;
+use clap::{command, ArgAction, Arg};
+use tracing::{debug, Level};
 
 fn main() {
-    let tera = match Tera::new("templates/**/*.html") {
-        Ok(t) => t,
-        Err(e) => {
-            println!("Parse error(s): {}", e);
-            exit(1);
-        }
+
+    let matches = command!()
+        .arg(
+            Arg::new("slide_dir")
+                .help("The directory containing the slides")
+                .required(true)
+                .index(1)
+                .validator(|s| {
+                    if PathBuf::from(s).is_dir() {
+                        Ok(())
+                    } else {
+                        Err(String::from("Slide directory must be an existing directory"))
+                    }
+                })
+        )
+        .arg(
+            Arg::new("output_dir")
+                .short('o')
+                .long("output-dir")
+                .help("The directory to output the generated files to")
+                .required(false)
+                .default_value("output/")
+                .validator(|s| {
+                    if PathBuf::from(s).is_dir() {
+                        Ok(())
+                    } else {
+                        Err(String::from("Output directory must exist"))
+                    }
+                })
+
+        )
+        .arg(Arg::new("template_file")
+            .short('t')
+            .long("template-file")
+            .help("The template file to generate the slides from")
+            .required(false)
+            .default_value("templates/slides.html")
+            .validator(|s| {
+                if PathBuf::from(s).is_file() {
+                    Ok(())
+                } else {
+                    Err(String::from("Template file must be a file"))
+                }
+            })
+        )
+        .arg(
+            Arg::new("verbose")
+                .short('v')
+                .long("verbose")
+                .help("Enables verbose tracing")
+                .action(ArgAction::Count)
+        ).get_matches();
+    let log_level = match matches.get_one::<u8>("verbose").expect("default 0") {
+        0 => Level::WARN,
+        1 => Level::INFO,
+        2 => Level::DEBUG,
+        _ => Level::TRACE,
     };
-    let mut ctx = Context::new();
+    tracing_subscriber::fmt().with_max_level(log_level).init();
+    debug!("slide_dir: {:?}", matches.value_of("slide_dir").unwrap());
+    debug!("output_dir: {:?}", matches.value_of("output_dir").unwrap());
+    debug!("template_file: {:?}", matches.value_of("template_file").unwrap());
+    debug!("verbose: {:?}", matches.get_one::<u8>("verbose").expect("verbose defaults to 0"));
 
-    create_dir_if_not_exists("./output").expect("Could not create output directory");
+    create_dir_if_not_exists("output/").expect("Could not create output directory");
 
-    let inp_dir = fs::read_dir("input").expect("Could not read input directory");
+    let entries = fetch_file_indices(matches.value_of("slide_dir").unwrap()).expect("Could not read slide directory");
+    let entries = indices_and_paths_to_entries(entries).expect("Could not parse indices and paths");
+    let files_to_proc = build_proc_pq(entries);
+    let file_contents = read_files_to_string(files_to_proc).expect("Could not read files");
+    let output_content = gen_output_content(matches.value_of("template_file").unwrap(), file_contents).expect("Could not generate html");
+    fs::write(format!("{}/index.html", matches.value_of("output_dir").unwrap()), output_content).expect("Could not write output file");
 
-    let mut files_to_process = std::collections::BinaryHeap::<FileEntry>::new();
-
-    for p in inp_dir {
-        let p = p.expect("Directory entry could not be read");
-        let ft = p.file_type().expect("Could not get file type");
-        if !ft.is_file() {
-            println!("Warning: Skipping {} because it is not a file", p.path().display());
-            continue;
-        }
-        // TODO: check if the file ends in .md at least
-        let path = p.path();
-        let read_path = path.display().to_string();
-        let file_name = path.file_stem().expect("Could not get file name").to_str().expect("Could not get file name as string");
-
-        let fp_splice = file_name.split("_");
-
-        let f_num = fp_splice.collect::<Vec<&str>>();
-        let f_num = f_num.first().expect("Could not get file number");
-        let f_num = f_num.parse::<i32>().expect("Could not parse file number");
-
-        // Hack to make a min heap
-        files_to_process.push(FileEntry {
-            idx: -f_num,
-            file_path: read_path
-        });
-    }
-
-    let mut ingested_files = Vec::<String>::new();
-    while !files_to_process.is_empty() {
-        let f = files_to_process.pop().expect("Could not pop file from heap");
-        let f = f.file_path;
-        println!("Processing {}", f);
-        let f = fs::read_to_string(f).expect("Could not read file");
-        ingested_files.push(f);
-    }
-
-
-    ctx.insert("slide_title", "Generated from rust");
-    ctx.insert("ingested_files", &ingested_files);
-
-    let rendered = match tera.render("slides.html", &ctx) {
-        Ok(r) => r,
-        Err(e) => {
-            println!("Template error(s): {}", e);
-            exit(1);
-        }
-    };
-    fs::write("output/slides.html", rendered).expect("Could not write output file");
-    println!("Done");
 }
