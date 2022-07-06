@@ -15,7 +15,9 @@ In rough order of priority
 - [ ] Generate zip file with revealJS deps
 - [ ] Automatically download revealJS if not present 
 - [ ] Support revealJS animations
-
+- [ ] Tests
+    - [ ] Unit tests
+    - [ ] Integration tests
 
 
 ## Usage
@@ -41,6 +43,7 @@ what files to include in the presentation. Name the file
 
 Example `slides.yaml`
 ```yaml
+title: Lesson 1
 include_files:
   - "file_1.md"
   - "file_2.md"

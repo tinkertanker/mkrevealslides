@@ -1,4 +1,6 @@
-mod conf;
+pub mod conf;
+pub mod val;
+pub mod error_handling;
 
 use std::{fs};
 use std::collections::BinaryHeap;
@@ -6,7 +8,9 @@ use std::io::{Error, ErrorKind};
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 use tera::{Context, Tera};
-use tracing::{info, debug, error, warn, trace};
+use tracing::{info, warn, trace};
+
+
 
 /// Creates a directory if it does not
 /// already exist
@@ -16,9 +20,9 @@ use tracing::{info, debug, error, warn, trace};
 ///
 /// # Errors
 /// Returns an error if the directory could not be created (not because it already exists)
-pub fn create_dir_if_not_exists(path: &str) -> Result<(), Error> {
-    if fs::metadata(path).is_err() {
-        info!("Creating directory {} since it does not exist", path);
+pub fn create_dir_if_not_exists<P: AsRef<Path>>(path: P) -> Result<(), Error> {
+    if fs::metadata(&path).is_err() {
+        info!("Creating directory {} since it does not exist", path.as_ref().display());
         fs::create_dir_all(path)?
     }
     Ok(())
