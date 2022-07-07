@@ -4,7 +4,6 @@ pub mod error_handling;
 
 use std::{fs};
 use std::collections::BinaryHeap;
-use std::fs::File;
 use std::io::{Error, ErrorKind};
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
@@ -55,12 +54,13 @@ impl Ord for FileEntry {
 impl Eq for FileEntry {}
 
 /// Returns just the file paths given a list of FileEntries
-pub fn just_file_paths(entries: &Vec<FileEntry>) -> Vec<PathBuf> {
+pub fn just_file_paths(entries: &[FileEntry]) -> Vec<PathBuf> {
     entries.iter().map(|e| e.file_path.clone()).collect()
 }
 
+/// Checks if the file at the given path has an extension of .md
 fn is_markdown_file(fp: &Path) -> bool {
-    fp.extension().unwrap_or_default() == "md"
+    fp.extension().unwrap_or_default().to_ascii_lowercase() == "md"
 }
 
 /// Fetches the string of a file that comes before some seperator (in this case, the underscore)
@@ -174,11 +174,11 @@ pub fn build_proc_pq(files: Vec<FileEntry>) -> Vec<FileEntry> {
 ///
 /// # Errors
 /// Returns an error if even a SINGLE file could not be read
-pub fn read_files_to_string(files: Vec<FileEntry>) -> Result<Vec<String>, Error> {
+pub fn read_files_to_string(files: &Vec<PathBuf>) -> Result<Vec<String>, Error> {
     let mut contents = Vec::<String>::new();
     for entry in files {
-        trace!("Reading file: {}", entry.file_path.display());
-        let file_contents = fs::read_to_string(entry.file_path)?;
+        trace!("Reading file: {}", entry.display());
+        let file_contents = fs::read_to_string(entry)?;
         contents.push(file_contents);
     }
     Ok(contents)
@@ -198,15 +198,20 @@ pub fn read_files_to_string(files: Vec<FileEntry>) -> Result<Vec<String>, Error>
 /// # Errors
 /// Returns an error if the template could not be read
 /// Returns an error if the template could not be rendered
-pub fn gen_output_content<P: AsRef<Path>>(input_template_path: P, presentation_title: &str, included_slides: Vec<String>) -> Result<String, Error> {
+pub fn gen_output_content<P: AsRef<Path>>(input_template_path: P, presentation_title: &str,
+                                          included_slides: Vec<String>) -> Result<String, Error> {
     trace!("Reading template: {}", input_template_path.as_ref().display());
     trace!("Num slides: {}", included_slides.len());
+
     let mut ctx = Context::new();
     ctx.insert("slide_title", presentation_title);
     ctx.insert("ingested_files", &included_slides);
+
     let inp_template = fs::read_to_string(input_template_path)?;
     trace!("Template read. File size: {}B", inp_template.len());
+
     let result = Tera::one_off(&inp_template, &ctx, true);
+
     trace!("Template rendered. Successful: {}", result.is_ok());
     result.map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
 }

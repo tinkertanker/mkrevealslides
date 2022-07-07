@@ -5,7 +5,7 @@ use std::num::ParseIntError;
 use crate::conf::ArgumentError;
 use crate::val::ValError;
 
-
+// todo: support error kinds
 pub struct AppError {
     pub message: String, // todo: message is a bit misleading
     pub description: String

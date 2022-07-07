@@ -1,8 +1,4 @@
 title: "Demo Slides"
 slide_dir: "examples/input"
-include_files:
-  - 1_test.md
-  - 2.md
-  - 3.md
-  - 0_intro.md
-  - 4.md
+output_file: "examples/output/index.html"
+template_file: "templates/slides.html"
