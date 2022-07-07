@@ -83,6 +83,15 @@ impl From<ArgumentError> for AppError {
     }
 }
 
+impl From<tera::Error> for AppError {
+    fn from(err: tera::Error) -> Self {
+        Self {
+            message: "Template Engine Error".to_string(),
+            description: err.to_string()
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::collections::BTreeMap;
@@ -135,6 +144,13 @@ mod test {
     fn test_from_val_error() {
         let err = AppError::from("welp".to_string());
         assert_eq!(err.to_string(), "Validation Error: welp");
+    }
+
+    #[test]
+    fn test_from_tera_error() {
+        let err = tera::Error::msg("welp".to_string());
+        let err = AppError::from(err);
+        assert_eq!(err.to_string(), "Template Engine Error: welp");
     }
 
 }
