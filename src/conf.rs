@@ -164,3 +164,72 @@ impl PresentationConfig {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::fs::File;
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_grab_file_names_from_path_bufs() {
+        let paths = vec![
+            PathBuf::from("/path/to/file1.txt"),
+            PathBuf::from("../relative/path/to/file2.md"),
+            PathBuf::from("./path/to/file3.html"),
+            PathBuf::from("file_no_ext")
+        ];
+        let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
+        assert_eq!(file_names, vec![
+            "file1.txt".to_string(),
+            "file2.md".to_string(),
+            "file3.html".to_string(),
+            "file_no_ext".to_string()
+        ]);
+    }
+
+    #[test]
+    fn test_find_included_slides() {
+        let slides_dir = tempdir().unwrap();
+        let slide_file_1 = slides_dir.path().join("1_slide1.md");
+        let slide_file_2 = slides_dir.path().join("2_slide2.md");
+        let slide_file_3 = slides_dir.path().join("3_slide3.md");
+        let not_md_file = slides_dir.path().join("5_not_md.txt");
+        File::create(&slide_file_1).unwrap();
+        File::create(&slide_file_2).unwrap();
+        File::create(&slide_file_3).unwrap();
+        File::create(&not_md_file).unwrap();
+        let slides = find_included_slides(&slides_dir.into_path()).unwrap();
+        assert_eq!(slides, vec![
+            slide_file_1,
+            slide_file_2,
+            slide_file_3
+        ]);
+    }
+
+    #[test]
+    fn test_find_included_slides_fails() {
+        let slides_dir = tempdir().unwrap();
+        let good_slide_file = slides_dir.path().join("1_slide1.md");
+        let bad_slide_file = slides_dir.path().join("slide2_2.md");
+        File::create(&good_slide_file).unwrap();
+        File::create(&bad_slide_file).unwrap();
+        let slides = find_included_slides(&slides_dir.into_path());
+        assert!(slides.is_err());
+
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_grab_file_names_from_path_bufs_windows() {
+        let paths = vec![
+            PathBuf::from(r"C:\Users\file4.txt"),
+            PathBuf::from(r"C:\file_no_ext"),
+        ];
+        let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
+        assert_eq!(file_names, vec![
+            "file4.txt".to_string(),
+            "file_no_ext".to_string()
+        ]);
+    }
+}
