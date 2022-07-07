@@ -5,6 +5,7 @@ use std::num::ParseIntError;
 
 use std::path::{Path, PathBuf};
 
+use crate::error_handling::AppError;
 use tracing::{trace, warn};
 
 #[derive(Clone)]
@@ -114,6 +115,43 @@ pub fn indices_and_paths_to_entries(
         entries.push(FileEntry { idx, file_path });
     }
     Ok(entries)
+}
+
+/// Walks the given directory and returns the slides found in there
+///
+/// # Arguments
+/// * slide_dir: The directory that contains your slides
+///
+/// # Returns
+/// A vector of paths to the slides, sorted.
+///
+/// # Errors
+/// Returns an error if the slide directory could not be read
+/// Returns an error if the indices could not be converted
+pub fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
+    let mut included_slides = Vec::new();
+    let entries = fetch_file_indices(slide_dir)?;
+    let mut entries = indices_and_paths_to_entries(entries)?;
+    entries.sort();
+    for entry in entries {
+        included_slides.push(entry.file_path.clone());
+    }
+    Ok(included_slides)
+}
+
+/// Takes a list of file paths, and only returns their file names (with extensions)
+pub fn grab_file_names_from_path_bufs(paths: &Vec<PathBuf>) -> Result<Vec<String>, AppError> {
+    let mut file_names = Vec::new();
+    for path in paths {
+        let file_name = path
+            .file_name()
+            .ok_or_else(|| AppError::new("Could not get file name from path"))?
+            .to_str()
+            .ok_or_else(|| AppError::new("Could not get file name as string"))?
+            .to_string();
+        file_names.push(file_name);
+    }
+    Ok(file_names)
 }
 
 #[cfg(test)]
@@ -275,5 +313,65 @@ mod test {
             vec![(hs!("not int"), PathBuf::from("/doesnt/really/matter/lol"))];
         let entries = indices_and_paths_to_entries(bad_indices_and_paths);
         assert!(entries.is_err());
+    }
+
+    #[test]
+    fn test_grab_file_names_from_path_bufs() {
+        let paths = vec![
+            PathBuf::from("/path/to/file1.txt"),
+            PathBuf::from("../relative/path/to/file2.md"),
+            PathBuf::from("./path/to/file3.html"),
+            PathBuf::from("file_no_ext"),
+        ];
+        let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
+        assert_eq!(
+            file_names,
+            vec![
+                "file1.txt".to_string(),
+                "file2.md".to_string(),
+                "file3.html".to_string(),
+                "file_no_ext".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn test_find_included_slides() {
+        let slides_dir = tempdir().unwrap();
+        let slide_file_1 = slides_dir.path().join("1_slide1.md");
+        let slide_file_2 = slides_dir.path().join("2_slide2.md");
+        let slide_file_3 = slides_dir.path().join("3_slide3.md");
+        let not_md_file = slides_dir.path().join("5_not_md.txt");
+        File::create(&slide_file_1).unwrap();
+        File::create(&slide_file_2).unwrap();
+        File::create(&slide_file_3).unwrap();
+        File::create(&not_md_file).unwrap();
+        let slides = find_included_slides(&slides_dir.into_path()).unwrap();
+        assert_eq!(slides, vec![slide_file_1, slide_file_2, slide_file_3]);
+    }
+
+    #[test]
+    fn test_find_included_slides_fails() {
+        let slides_dir = tempdir().unwrap();
+        let good_slide_file = slides_dir.path().join("1_slide1.md");
+        let bad_slide_file = slides_dir.path().join("slide2_2.md");
+        File::create(&good_slide_file).unwrap();
+        File::create(&bad_slide_file).unwrap();
+        let slides = find_included_slides(&slides_dir.into_path());
+        assert!(slides.is_err());
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn test_grab_file_names_from_path_bufs_windows() {
+        let paths = vec![
+            PathBuf::from(r"C:\Users\file4.txt"),
+            PathBuf::from(r"C:\file_no_ext"),
+        ];
+        let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
+        assert_eq!(
+            file_names,
+            vec!["file4.txt".to_string(), "file_no_ext".to_string()]
+        );
     }
 }
