@@ -82,3 +82,59 @@ impl From<ArgumentError> for AppError {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::collections::BTreeMap;
+    use super::*;
+    #[test]
+    fn test_apperror_fmt_debug() {
+        let err = AppError::new("test");
+        assert_eq!(format!("{:?}", err), "test: test");
+    }
+
+    #[test]
+    fn test_apperror_display() {
+        let err = AppError::new("test");
+        assert_eq!(format!("{}", err), "test: test");
+    }
+
+    #[test]
+    fn test_apperror_description() {
+        let err = AppError::new("test_desc");
+        assert_eq!(err.to_string(), "test_desc: test_desc");
+    }
+
+    #[test]
+    fn test_from_io_error() {
+        let err = AppError::from(io::Error::new(io::ErrorKind::Other, "test"));
+        assert_eq!(err.to_string(), "IO Error: test");
+    }
+
+    #[test]
+    fn test_from_parse_int_error() {
+        let err = AppError::from("not_num".parse::<i32>().unwrap_err());
+        assert!(err.to_string().contains("Parse Error (int)"));
+    }
+
+    #[test]
+    fn test_from_serde_yaml_error() {
+        let bad_yaml_err = serde_yaml::from_str::
+        <BTreeMap<String, String>>("invalid_yaml|").unwrap_err();
+        let err = AppError::from(bad_yaml_err);
+        assert!(err.to_string().contains("Parse Error (yaml)"));
+    }
+
+    #[test]
+    fn test_from_argument_error() {
+        let err = AppError::from(("arg0".to_string(), "invalid arg".to_string()));
+        assert_eq!(err.to_string(), "Arg error: arg0: invalid arg");
+    }
+
+    #[test]
+    fn test_from_val_error() {
+        let err = AppError::from("welp".to_string());
+        assert_eq!(err.to_string(), "Validation Error: welp");
+    }
+
+}
