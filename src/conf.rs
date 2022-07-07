@@ -6,11 +6,12 @@ use crate::error_handling::AppError;
 use crate::val::validate_file_path;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct SlideConfig {
+pub struct PresentationConfig {
     pub title: String,
     pub slide_dir: PathBuf,
     pub output_file: PathBuf,
     pub template_file: PathBuf,
+    /// Note: relative to slide_dir!
     pub include_files: Option<Vec<String>>,
 }
 
@@ -27,7 +28,7 @@ pub type ArgumentError = (String, String);
 /// # Errors
 /// Returns an error if the slide directory could not be read
 /// Returns an error if the indices could not be converted
-pub fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
+fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
     let mut included_slides = Vec::new();
     let entries = fetch_file_indices(slide_dir)?;
     let entries = indices_and_paths_to_entries(entries)?;
@@ -52,7 +53,7 @@ fn grab_file_names_from_pathbufs(paths: &Vec<PathBuf>) -> Result<Vec<String>, Ap
     Ok(file_names)
 }
 
-impl SlideConfig {
+impl PresentationConfig {
     /// Processes arguments provided to the program
     /// and builds the logical configuration from that
     ///
