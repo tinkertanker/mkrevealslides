@@ -1,6 +1,9 @@
 pub mod conf;
 pub mod val;
 pub mod error_handling;
+pub mod parsing;
+pub mod presentation;
+pub mod slide;
 
 use std::{fs};
 use std::collections::BinaryHeap;

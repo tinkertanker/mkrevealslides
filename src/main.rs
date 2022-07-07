@@ -4,8 +4,10 @@ use mkrevealslides::*;
 use std::path::PathBuf;
 use clap::{command, ArgAction, Arg, value_parser, ArgGroup};
 use tracing::{debug, info, Level};
-use mkrevealslides::conf::SlideConfig;
+use mkrevealslides::conf::PresentationConfig;
 use mkrevealslides::error_handling::AppError;
+use mkrevealslides::parsing::{get_local_links, grab_image_links};
+use mkrevealslides::presentation::Presentation;
 
 fn main() -> Result<(), AppError> {
 
@@ -65,20 +67,19 @@ fn main() -> Result<(), AppError> {
     let slide_config = if let Some(conf_path) = config_fp {
         debug!("Discovered config file: {}", conf_path.display());
         let conf_contents = fs::read_to_string(conf_path)?;
-        let conf: SlideConfig = serde_yaml::from_str(&conf_contents)?;
+        let conf: PresentationConfig = serde_yaml::from_str(&conf_contents)?;
         conf
     } else {
         info!("No config file given, using default");
-        let conf: SlideConfig = SlideConfig::proc_args(matches)?;
+        let conf: PresentationConfig = PresentationConfig::proc_args(matches)?;
         conf
     };
 
     debug!("Processed config: {:?}", slide_config);
 
-    let slide_contents = read_files_to_string(slide_config.to_full_paths()?.as_ref())?;
-    let output_content = gen_output_content(slide_config.template_file,
-                                            &slide_config.title,
-                                            slide_contents)?;
+    let presentation = Presentation::from_config(&slide_config)?;
+    let output_content = presentation.render()?;
+    debug!("Attempting write to file: {}", slide_config.output_file.display());
     fs::write(&slide_config.output_file, output_content)?;
     println!("Wrote output to {}", &slide_config.output_file.display());
     Ok(())
