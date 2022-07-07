@@ -94,20 +94,4 @@ mod test {
             "Test Presentation 'slide 1''slide 2''slide 3'"
         );
     }
-
-    // #[test]
-    // fn test_from_config() {
-    //     let cfg = PresentationConfig {
-    //         title: "Test Presentation".to_string(),
-    //         slide_dir: Default::default(),
-    //         output_file: Default::default(),
-    //         template_file: "test_template.html".to_string(),
-    //         slides: vec![
-    //             "test_slide1.md".to_string(),
-    //             "test_slide2.md".to_string(),
-    //             "test_slide3.md".to_string()
-    //         ],
-    //         include_files: None
-    //     };
-    // }
 }
