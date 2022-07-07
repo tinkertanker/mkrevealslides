@@ -1,11 +1,11 @@
 use crate::error_handling::AppError;
+use crate::io::{fetch_file_indices, indices_and_paths_to_entries};
 use crate::val::validate_file_path;
 use clap::ArgMatches;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 use tracing::trace;
-use crate::io::{fetch_file_indices, indices_and_paths_to_entries};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PresentationConfig {
@@ -167,8 +167,8 @@ impl PresentationConfig {
 
 #[cfg(test)]
 mod test {
-    use std::fs::File;
     use super::*;
+    use std::fs::File;
     use tempfile::tempdir;
 
     #[test]
@@ -177,15 +177,18 @@ mod test {
             PathBuf::from("/path/to/file1.txt"),
             PathBuf::from("../relative/path/to/file2.md"),
             PathBuf::from("./path/to/file3.html"),
-            PathBuf::from("file_no_ext")
+            PathBuf::from("file_no_ext"),
         ];
         let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
-        assert_eq!(file_names, vec![
-            "file1.txt".to_string(),
-            "file2.md".to_string(),
-            "file3.html".to_string(),
-            "file_no_ext".to_string()
-        ]);
+        assert_eq!(
+            file_names,
+            vec![
+                "file1.txt".to_string(),
+                "file2.md".to_string(),
+                "file3.html".to_string(),
+                "file_no_ext".to_string()
+            ]
+        );
     }
 
     #[test]
@@ -200,11 +203,7 @@ mod test {
         File::create(&slide_file_3).unwrap();
         File::create(&not_md_file).unwrap();
         let slides = find_included_slides(&slides_dir.into_path()).unwrap();
-        assert_eq!(slides, vec![
-            slide_file_1,
-            slide_file_2,
-            slide_file_3
-        ]);
+        assert_eq!(slides, vec![slide_file_1, slide_file_2, slide_file_3]);
     }
 
     #[test]
@@ -216,7 +215,6 @@ mod test {
         File::create(&bad_slide_file).unwrap();
         let slides = find_included_slides(&slides_dir.into_path());
         assert!(slides.is_err());
-
     }
 
     #[test]
@@ -227,9 +225,9 @@ mod test {
             PathBuf::from(r"C:\file_no_ext"),
         ];
         let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
-        assert_eq!(file_names, vec![
-            "file4.txt".to_string(),
-            "file_no_ext".to_string()
-        ]);
+        assert_eq!(
+            file_names,
+            vec!["file4.txt".to_string(), "file_no_ext".to_string()]
+        );
     }
 }

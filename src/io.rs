@@ -276,5 +276,4 @@ mod test {
         let entries = indices_and_paths_to_entries(bad_indices_and_paths);
         assert!(entries.is_err());
     }
-
 }
