@@ -70,7 +70,7 @@ fn main() -> Result<(), AppError> {
     let config_fp = matches.get_one::<PathBuf>("config_file");
 
     let slide_config = if let Some(conf_path) = config_fp {
-        PresentationConfig::read_config_file(conf_path)?
+        PresentationConfig::read_config_file(conf_path.clone())?
     } else {
         info!("No config file given, using default");
         let conf: PresentationConfig = PresentationConfig::process_args(matches)?;
@@ -78,7 +78,7 @@ fn main() -> Result<(), AppError> {
     };
 
     debug!("Processed config: {:?}", slide_config);
-    slide_config.validate_include_paths()?;
+    
     debug!("Generating presentation");
     let presentation = Presentation::from_config(&slide_config)?;
     let output_content = presentation.render()?;

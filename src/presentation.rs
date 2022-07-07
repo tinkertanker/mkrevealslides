@@ -24,7 +24,7 @@ impl Presentation {
         debug!("Template read: {} bytes", template.len());
         let slides = {
             let mut slides = Vec::new();
-            for pth in &config.to_full_paths()? {
+            for pth in &config.include_files {
                 trace!("Reading slide at {}", pth.display());
                 let slide = Slide::from_file(pth)?;
                 slides.push(slide);

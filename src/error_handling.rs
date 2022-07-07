@@ -26,7 +26,7 @@ impl fmt::Display for AppError {
 impl AppError {
     pub fn new(message: &str) -> AppError {
         AppError {
-            message: message.to_string(),
+            message: "App Error".to_string(),
             description: message.to_string(),
         }
     }
@@ -77,7 +77,7 @@ impl From<ValError> for AppError {
 impl From<ArgumentError> for AppError {
     fn from(err: ArgumentError) -> Self {
         Self {
-            message: format!("Arg error: {}", err.0),
+            message: format!("Arg error [{}]", err.0),
             description: err.1,
         }
     }
@@ -99,19 +99,19 @@ mod test {
     #[test]
     fn test_apperror_fmt_debug() {
         let err = AppError::new("test");
-        assert_eq!(format!("{:?}", err), "test: test");
+        assert_eq!(format!("{:?}", err), "App Error: test");
     }
 
     #[test]
     fn test_apperror_display() {
         let err = AppError::new("test");
-        assert_eq!(format!("{}", err), "test: test");
+        assert_eq!(format!("{}", err), "App Error: test");
     }
 
     #[test]
     fn test_apperror_description() {
         let err = AppError::new("test_desc");
-        assert_eq!(err.to_string(), "test_desc: test_desc");
+        assert_eq!(err.to_string(), "App Error: test_desc");
     }
 
     #[test]
@@ -137,7 +137,7 @@ mod test {
     #[test]
     fn test_from_argument_error() {
         let err = AppError::from(("arg0".to_string(), "invalid arg".to_string()));
-        assert_eq!(err.to_string(), "Arg error: arg0: invalid arg");
+        assert_eq!(err.to_string(), "Arg error [arg0]: invalid arg");
     }
 
     #[test]

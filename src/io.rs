@@ -6,9 +6,9 @@ use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 
 use crate::error_handling::AppError;
-use tracing::{trace, warn};
+use tracing::{error, trace, warn};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileEntry {
     pub idx: i32,
     pub file_path: PathBuf,
@@ -58,7 +58,15 @@ fn is_markdown_file(fp: &Path) -> bool {
 /// # Returns
 /// A vector of file indices and their paths
 pub fn fetch_file_indices<P: AsRef<Path>>(dir: P) -> Result<Vec<(String, PathBuf)>, Error> {
-    let inp_dir = fs::read_dir(dir)?;
+    trace!("Fetching file indices from directory: {}", dir.as_ref().display());
+    let inp_dir = fs::read_dir(dir);
+    let inp_dir = match inp_dir {
+        Ok(dir) => dir,
+        Err(e) => {
+            error!("Could not read directory: {}", e);
+            return Err(e);
+        },
+    };
     let mut files = Vec::<(String, PathBuf)>::new();
     for p in inp_dir {
         let p = p?;
@@ -128,7 +136,8 @@ pub fn indices_and_paths_to_entries(
 /// # Errors
 /// Returns an error if the slide directory could not be read
 /// Returns an error if the indices could not be converted
-pub fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
+pub fn find_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
+    trace!("Finding slides in {}", slide_dir.display());
     let mut included_slides = Vec::new();
     let entries = fetch_file_indices(slide_dir)?;
     let mut entries = indices_and_paths_to_entries(entries)?;
@@ -140,15 +149,13 @@ pub fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppErro
 }
 
 /// Takes a list of file paths, and only returns their file names (with extensions)
-pub fn grab_file_names_from_path_bufs(paths: &Vec<PathBuf>) -> Result<Vec<String>, AppError> {
+pub fn grab_file_names_from_path_bufs(paths: &Vec<PathBuf>) -> Result<Vec<PathBuf>, AppError> {
     let mut file_names = Vec::new();
     for path in paths {
         let file_name = path
             .file_name()
-            .ok_or_else(|| AppError::new("Could not get file name from path"))?
-            .to_str()
-            .ok_or_else(|| AppError::new("Could not get file name as string"))?
-            .to_string();
+            .ok_or_else(|| AppError::new("Could not get file name from path"))?;
+        let file_name = PathBuf::from(file_name);
         file_names.push(file_name);
     }
     Ok(file_names)
@@ -327,10 +334,10 @@ mod test {
         assert_eq!(
             file_names,
             vec![
-                "file1.txt".to_string(),
-                "file2.md".to_string(),
-                "file3.html".to_string(),
-                "file_no_ext".to_string()
+                PathBuf::from("file1.txt"),
+                PathBuf::from("file2.md"),
+                PathBuf::from("file3.html"),
+                PathBuf::from("file_no_ext"),
             ]
         );
     }
@@ -346,7 +353,7 @@ mod test {
         File::create(&slide_file_2).unwrap();
         File::create(&slide_file_3).unwrap();
         File::create(&not_md_file).unwrap();
-        let slides = find_included_slides(&slides_dir.into_path()).unwrap();
+        let slides = find_slides(&slides_dir.into_path()).unwrap();
         assert_eq!(slides, vec![slide_file_1, slide_file_2, slide_file_3]);
     }
 
@@ -357,7 +364,7 @@ mod test {
         let bad_slide_file = slides_dir.path().join("slide2_2.md");
         File::create(&good_slide_file).unwrap();
         File::create(&bad_slide_file).unwrap();
-        let slides = find_included_slides(&slides_dir.into_path());
+        let slides = find_slides(&slides_dir.into_path());
         assert!(slides.is_err());
     }
 
@@ -371,7 +378,10 @@ mod test {
         let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
         assert_eq!(
             file_names,
-            vec!["file4.txt".to_string(), "file_no_ext".to_string()]
+            vec![
+                PathBuf::from("file4.txt"),
+                PathBuf::from("file_no_ext")
+            ]
         );
     }
 }

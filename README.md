@@ -14,7 +14,7 @@ In rough order of priority
 - [x] Superior error handling that does not involve CRASHING the program
   - [ ] More helpful error messages 
 - [x] Configuration file support
-    - [ ] Force paths relative to config file dir instead of invocation dir
+    - [x] Force paths relative to config file dir instead of invocation dir
 - [ ] Support markdown images
 - [ ] Support slide 1a, 1b etc.
 - [ ] Generate zip file with revealJS deps

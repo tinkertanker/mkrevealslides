@@ -3,6 +3,7 @@ use mkrevealslides::presentation::Presentation;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 use tempfile::tempdir;
 
 #[test]
@@ -31,18 +32,17 @@ fn test_presentation_from_config() {
         .write_all(template_contents.as_bytes())
         .unwrap();
 
-    let cfg = PresentationConfig {
-        title: "Test Presentation".to_string(),
-        slide_dir,
-        output_file,
-        template_file,
-        include_files: Some(vec![
-            "1_slide1.md".to_string(),
-            "2_slide2.md".to_string(),
-            "3_slide3.md".to_string(),
-        ]),
-    };
+    let cfg_file = tmp_dir.path().join("config.yaml");
+    let cfg_str = r#"
+title: "Test Presentation"
+slide_dir: "slides"
+output_file: "output.html"
+template_file: "template.html"
+"#;
+    let mut h_cfg_file = File::create(&cfg_file).unwrap();
+    h_cfg_file.write_all(cfg_str.as_bytes()).unwrap();
 
+    let cfg = PresentationConfig::read_config_file(cfg_file).unwrap();
     let ppt = Presentation::from_config(&cfg).unwrap();
     assert_eq!(ppt.title, "Test Presentation");
     assert_eq!(ppt.template, template_contents);
