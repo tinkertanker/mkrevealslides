@@ -12,22 +12,19 @@ fn main() -> Result<(), AppError> {
     let matches = command!()
         .arg(
             Arg::new("slide_dir")
-                .help("The directory containing the slides")
+                .help("The directory containing the slides. Cannot be used with --conf")
                 .value_parser(value_parser!(PathBuf))
         )
         .arg(
             Arg::new("output_file")
-                .short('o')
-                .long("output-file")
-                .help("The file to output to")
+                .help("The file to output to. Cannot be used with --conf")
                 .takes_value(true)
                 .value_parser(value_parser!(PathBuf))
         )
         .arg(
             Arg::new("template_file")
-                .short('t')
-                .long("template-file")
-                .help("The template file to generate the slides from")
+                .help("The template file to generate the slides from. \
+                Cannot be used with --conf")
                 .takes_value(true)
                 .value_parser(value_parser!(PathBuf))
         )
@@ -41,7 +38,8 @@ fn main() -> Result<(), AppError> {
             Arg::new("config_file")
                 .short('c')
                 .long("conf")
-                .help("The config file to read")
+                .help("The config file to read. \
+                 Cannot be used with slide_dir, output_file and template_file")
                 .required(false)
                 .takes_value(true)
                 .value_parser(value_parser!(PathBuf))
@@ -50,8 +48,8 @@ fn main() -> Result<(), AppError> {
             Arg::new("verbose")
                 .short('v')
                 .long("verbose")
-                .help("Enables verbose tracing")
-                .long_help("Displays tracing information to the console. \
+                .help("Enables verbose tracing/logging")
+                .long_help("Displays tracing (logging) information to the console. \
                 Adding more 'v's will increase the tracing level. ")
                 .action(ArgAction::Count)
         ).get_matches();
