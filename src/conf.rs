@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use clap::ArgMatches;
 use serde::{Deserialize};
-use crate::{build_proc_pq, fetch_file_indices, indices_and_paths_to_entries};
+use crate::{fetch_file_indices, indices_and_paths_to_entries};
 use crate::error_handling::AppError;
 use crate::val::validate_file_path;
 
@@ -31,8 +31,8 @@ pub type ArgumentError = (String, String);
 fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
     let mut included_slides = Vec::new();
     let entries = fetch_file_indices(slide_dir)?;
-    let entries = indices_and_paths_to_entries(entries)?;
-    let entries = build_proc_pq(entries);
+    let mut entries = indices_and_paths_to_entries(entries)?;
+    entries.sort();
     for entry in entries {
         included_slides.push(entry.file_path.clone());
     }

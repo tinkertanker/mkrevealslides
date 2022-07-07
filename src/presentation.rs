@@ -73,5 +73,23 @@ impl Presentation {
 
 #[cfg(test)]
 mod test {
+    use crate::presentation::Presentation;
+    use crate::slide::Slide;
 
+    #[test]
+    fn test_render() {
+        let slides = vec![
+            Slide::new("slide 1".to_string()),
+            Slide::new("slide 2".to_string()),
+            Slide::new("slide 3".to_string())
+        ];
+        let ppt = Presentation {
+            title: "Test Presentation".to_string(),
+            template: "{{ slide_title }} {%for fc in ingested_files %}'{{fc}}'{%endfor%}".to_string(),
+            slides
+        };
+        let render_result = ppt.render().unwrap();
+        assert_eq!(render_result, "Test Presentation 'slide 1''slide 2''slide 3'");
+
+    }
 }

@@ -1,12 +1,11 @@
 use std::{fs};
-use mkrevealslides::*;
 
 use std::path::PathBuf;
 use clap::{command, ArgAction, Arg, value_parser, ArgGroup};
 use tracing::{debug, info, Level};
 use mkrevealslides::conf::PresentationConfig;
 use mkrevealslides::error_handling::AppError;
-use mkrevealslides::parsing::{get_local_links, grab_image_links};
+
 use mkrevealslides::presentation::Presentation;
 
 fn main() -> Result<(), AppError> {

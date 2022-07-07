@@ -6,30 +6,13 @@ pub mod presentation;
 pub mod slide;
 
 use std::{fs};
-use std::collections::BinaryHeap;
+
 use std::io::{Error, ErrorKind};
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
-use tera::{Context, Tera};
-use tracing::{info, warn, trace};
 
+use tracing::{warn, trace};
 
-
-/// Creates a directory if it does not
-/// already exist
-///
-/// # Arguments
-/// The path to the directory to create
-///
-/// # Errors
-/// Returns an error if the directory could not be created (not because it already exists)
-pub fn create_dir_if_not_exists<P: AsRef<Path>>(path: P) -> Result<(), Error> {
-    if fs::metadata(&path).is_err() {
-        info!("Creating directory {} since it does not exist", path.as_ref().display());
-        fs::create_dir_all(path)?
-    }
-    Ok(())
-}
 
 #[derive(Clone)]
 pub struct FileEntry {
@@ -56,11 +39,6 @@ impl Ord for FileEntry {
 }
 
 impl Eq for FileEntry {}
-
-/// Returns just the file paths given a list of FileEntries
-pub fn just_file_paths(entries: &[FileEntry]) -> Vec<PathBuf> {
-    entries.iter().map(|e| e.file_path.clone()).collect()
-}
 
 /// Checks if the file at the given path has an extension of .md
 fn is_markdown_file(fp: &Path) -> bool {
@@ -140,34 +118,6 @@ pub fn indices_and_paths_to_entries(indices_and_paths: Vec<(String, PathBuf)>) -
     Ok(entries)
 }
 
-/// Sorts the FileEntries by their index
-/// # Note
-/// Time complexity: O(n log n) (heapsort)
-///
-/// Also completely unnecessary since `PartialOrd` is implemented for `FileEntry`
-///
-/// # Arguments
-/// * `files` - The vector of FileEntries to sort
-///
-/// # Returns
-/// A sorted vector of FileEntries, sorted by their index
-pub fn build_proc_pq(files: Vec<FileEntry>) -> Vec<FileEntry> {
-    let mut pq = BinaryHeap::new();
-    // negate their idx to make a min heap
-    for mut file in files {
-        file.idx = -file.idx;
-        pq.push(file);
-    }
-
-    let mut sorted = Vec::<FileEntry>::new();
-    while let Some(mut file) = pq.pop() {
-        // invert it back as we pull it out
-        file.idx = -file.idx;
-        sorted.push(file);
-    }
-    sorted
-}
-
 /// Takes a list of files, reads their contents and returns them as a vector of strings
 ///
 /// # Arguments
@@ -188,38 +138,6 @@ pub fn read_files_to_string(files: &Vec<PathBuf>) -> Result<Vec<String>, Error> 
     Ok(contents)
 }
 
-/// Takes a list of ordered slide content, an input template
-/// and renders the template with the slide content
-///
-/// # Arguments
-/// * `included_slides` - The vector of strings, each string being the contents of a slide
-/// * `input_template_path` - The path to the input template
-/// * `presentation_title` - The title of the presentation
-///
-/// # Returns
-/// A string, the rendered template
-///
-/// # Errors
-/// Returns an error if the template could not be read
-/// Returns an error if the template could not be rendered
-pub fn gen_output_content<P: AsRef<Path>>(input_template_path: P, presentation_title: &str,
-                                          included_slides: Vec<String>) -> Result<String, Error> {
-    trace!("Reading template: {}", input_template_path.as_ref().display());
-    trace!("Num slides: {}", included_slides.len());
-
-    let mut ctx = Context::new();
-    ctx.insert("slide_title", presentation_title);
-    ctx.insert("ingested_files", &included_slides);
-
-    let inp_template = fs::read_to_string(input_template_path)?;
-    trace!("Template read. File size: {}B", inp_template.len());
-
-    let result = Tera::one_off(&inp_template, &ctx, true);
-
-    trace!("Template rendered. Successful: {}", result.is_ok());
-    result.map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
-}
-
 
 #[cfg(test)]
 mod test {
@@ -235,7 +153,6 @@ mod test {
             String::from($s)
         }
     }
-
 
     #[test]
     fn test_file_entry_sortable() {
@@ -253,15 +170,10 @@ mod test {
                 file_path: PathBuf::from("/tmp/2.md"),
             },
         ];
-        let proc_pq = build_proc_pq(file_entries.clone());
         file_entries.sort();
         assert_eq!(file_entries[0].idx, 1);
         assert_eq!(file_entries[1].idx, 2);
         assert_eq!(file_entries[2].idx, 3);
-
-        assert_eq!(proc_pq[0].idx, 1);
-        assert_eq!(proc_pq[1].idx, 2);
-        assert_eq!(proc_pq[2].idx, 3);
     }
 
     #[test]
@@ -272,25 +184,6 @@ mod test {
         assert!(is_markdown_file(&md_file_name));
         assert!(!is_markdown_file(&not_md_file_name));
         assert!(!is_markdown_file(&definitely_not_md));
-    }
-
-    #[test]
-    fn test_just_file_paths() {
-        let entries = vec![
-            FileEntry {
-                idx: 1,
-                file_path: PathBuf::from("/a/b/c/file.md"),
-            },
-            FileEntry {
-                idx: 2,
-                file_path: PathBuf::from("/a/b/c/file2.md"),
-            },
-        ];
-
-        let just_file_paths = just_file_paths(&entries);
-        assert_eq!(just_file_paths.len(), 2);
-        assert_eq!(just_file_paths[0], PathBuf::from("/a/b/c/file.md"));
-        assert_eq!(just_file_paths[1], PathBuf::from("/a/b/c/file2.md"));
     }
 
     #[test]
@@ -382,19 +275,6 @@ mod test {
 
         tmp_dir.close().unwrap();
 
-    }
-
-    #[test]
-    fn test_gen_output_content() {
-        let tmp_dir = tempdir().unwrap();
-        let template_content = "{{ slide_title }} {%for fc in ingested_files %}'{{fc}}'{%endfor%}";
-        let mut tmp_template = tmp_dir.path().join("template.tera");
-        File::create(&mut tmp_template).unwrap().write_all(template_content.as_bytes()).unwrap();
-        let slide_contents = vec![hs!("a"), hs!("b"), hs!("c")];
-        let output_content = gen_output_content(tmp_template,
-                                                "test",
-                                                slide_contents).unwrap();
-        assert_eq!(output_content, "test 'a''b''c'");
     }
 
     #[test]
