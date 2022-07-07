@@ -118,27 +118,6 @@ pub fn indices_and_paths_to_entries(indices_and_paths: Vec<(String, PathBuf)>) -
     Ok(entries)
 }
 
-/// Takes a list of files, reads their contents and returns them as a vector of strings
-///
-/// # Arguments
-/// * `files` - The vector of files to read
-///
-/// # Returns
-/// A vector of strings, each string being the contents of a file
-///
-/// # Errors
-/// Returns an error if even a SINGLE file could not be read
-pub fn read_files_to_string(files: &Vec<PathBuf>) -> Result<Vec<String>, Error> {
-    let mut contents = Vec::<String>::new();
-    for entry in files {
-        trace!("Reading file: {}", entry.display());
-        let file_contents = fs::read_to_string(entry)?;
-        contents.push(file_contents);
-    }
-    Ok(contents)
-}
-
-
 #[cfg(test)]
 mod test {
     use std::fs::File;
@@ -275,27 +254,6 @@ mod test {
 
         tmp_dir.close().unwrap();
 
-    }
-
-    #[test]
-    fn test_read_files_to_string() {
-        let tmp_dir = tempdir().unwrap();
-        let file_1 = tmp_dir.path().join("0_test.md");
-        let file_2 = tmp_dir.path().join("1_test.md");
-        let file_3 = tmp_dir.path().join("2_test.md");
-
-        let file_paths = vec![file_1, file_2, file_3];
-        let expected_contents = vec!["file_1", "file_2", "file_3"];
-
-        for (fp, content) in zip(&file_paths, &expected_contents) {
-            let mut created_file = File::create(&fp).unwrap();
-            created_file.write_all(content.as_bytes()).unwrap();
-        }
-
-        let mut contents = read_files_to_string(&file_paths).unwrap();
-        contents.sort();
-        assert_eq!(contents.len(), 3);
-        assert_eq!(contents, expected_contents);
     }
 
     #[test]
