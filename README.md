@@ -8,8 +8,8 @@ In rough order of priority
 
 - [x] Better UI
 - [x] Check if the file is actually a `.md` file
-- [ ] Superior error handling that does not involve CRASHING the program
-- [ ] Configuration file support
+- [x] Superior error handling that does not involve CRASHING the program
+- [x] Configuration file support
 - [ ] Support markdown images
 - [ ] Support slide 1a, 1b etc.
 - [ ] Generate zip file with revealJS deps
