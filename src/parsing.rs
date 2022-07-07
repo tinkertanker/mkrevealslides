@@ -57,7 +57,7 @@ pub fn get_local_links(links: Vec<String>) -> Vec<String> {
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use super::*;
 
     #[test]
