@@ -1,4 +1,0 @@
-title: "Demo Slides"
-slide_dir: "examples/input"
-output_file: "examples/output/index.html"
-template_file: "templates/slides.html"

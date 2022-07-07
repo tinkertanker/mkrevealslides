@@ -1,0 +1,4 @@
+title: "Inline images"
+slide_dir: "examples/inline_images/slides"
+output_file: "examples/inline_images/output/index.html"
+template_file: "templates/slides.html"

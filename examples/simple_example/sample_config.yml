@@ -1,0 +1,4 @@
+title: "Demo Slides"
+slide_dir: "examples/simple_example/input"
+output_file: "examples/simple_example/output/index.html"
+template_file: "templates/slides.html"
