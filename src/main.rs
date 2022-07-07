@@ -64,18 +64,16 @@ fn main() -> Result<(), AppError> {
     let config_fp = matches.get_one::<PathBuf>("config_file");
 
     let slide_config = if let Some(conf_path) = config_fp {
-        debug!("Discovered config file: {}", conf_path.display());
-        let conf_contents = fs::read_to_string(conf_path)?;
-        let conf: PresentationConfig = serde_yaml::from_str(&conf_contents)?;
-        conf
+        PresentationConfig::read_config_file(conf_path)?
     } else {
         info!("No config file given, using default");
-        let conf: PresentationConfig = PresentationConfig::proc_args(matches)?;
+        let conf: PresentationConfig = PresentationConfig::process_args(matches)?;
         conf
     };
 
     debug!("Processed config: {:?}", slide_config);
-
+    slide_config.validate_include_paths()?;
+    debug!("Generating presentation");
     let presentation = Presentation::from_config(&slide_config)?;
     let output_content = presentation.render()?;
     debug!("Attempting write to file: {}", slide_config.output_file.display());

@@ -1,6 +1,8 @@
+use std::fs;
 use std::path::PathBuf;
 use clap::ArgMatches;
 use serde::{Deserialize};
+use tracing::trace;
 use crate::{fetch_file_indices, indices_and_paths_to_entries};
 use crate::error_handling::AppError;
 use crate::val::validate_file_path;
@@ -40,7 +42,7 @@ fn find_included_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
 }
 
 /// Takes a list of file paths, and only returns their file names (with extensions)
-fn grab_file_names_from_pathbufs(paths: &Vec<PathBuf>) -> Result<Vec<String>, AppError> {
+fn grab_file_names_from_path_bufs(paths: &Vec<PathBuf>) -> Result<Vec<String>, AppError> {
     let mut file_names = Vec::new();
     for path in paths {
         let file_name = path.file_name().ok_or_else(|| {
@@ -54,6 +56,13 @@ fn grab_file_names_from_pathbufs(paths: &Vec<PathBuf>) -> Result<Vec<String>, Ap
 }
 
 impl PresentationConfig {
+    pub fn read_config_file(config_file_path: &PathBuf) -> Result<Self, AppError> {
+        trace!("Attempting to read config file: {}", config_file_path.display());
+        let config_str = fs::read_to_string(config_file_path)?;
+        trace!("Config file read: {} bytes", config_str.len());
+        let config: Self = serde_yaml::from_str(&config_str)?;
+        Ok(config)
+    }
     /// Processes arguments provided to the program
     /// and builds the logical configuration from that
     ///
@@ -61,7 +70,7 @@ impl PresentationConfig {
     /// Returns error if the arguments are invalid (e.g. missing required arguments)
     /// Returns error if it could not parse the file indices into a vector of FileEntry structs
     /// Returns error if it could not read the template file
-    pub fn proc_args(args: ArgMatches) -> Result<Self, AppError> {
+    pub fn process_args(args: ArgMatches) -> Result<Self, AppError> {
         let slide_dir = args.get_one::<PathBuf>("slide_dir").ok_or_else(|| {
             ("slide_dir".to_string(),
                  "Slide directory is required".to_string())
@@ -77,7 +86,7 @@ impl PresentationConfig {
         })?.clone();
 
         let include_files = find_included_slides(&slide_dir)?;
-        let include_files = grab_file_names_from_pathbufs(&include_files)?;
+        let include_files = grab_file_names_from_path_bufs(&include_files)?;
 
         Ok(Self {
             title, slide_dir, output_file, template_file, include_files: Some(include_files),
@@ -91,6 +100,7 @@ impl PresentationConfig {
         if let Some(include_files) = &self.include_files {
             for include_file in include_files {
                 let file_path = self.slide_dir.join(include_file);
+                trace!("Validating include file: {} at {}", include_file, file_path.display());
                 validate_file_path(file_path.to_str().ok_or_else(|| {
                     AppError::new("Could not convert file path to string")
                 })?)?;
