@@ -1,18 +1,17 @@
 pub mod conf;
-pub mod val;
 pub mod error_handling;
 pub mod parsing;
 pub mod presentation;
 pub mod slide;
+pub mod val;
 
-use std::{fs};
+use std::fs;
 
 use std::io::{Error, ErrorKind};
 use std::num::ParseIntError;
 use std::path::{Path, PathBuf};
 
-use tracing::{warn, trace};
-
+use tracing::{trace, warn};
 
 #[derive(Clone)]
 pub struct FileEntry {
@@ -78,19 +77,24 @@ pub fn fetch_file_indices<P: AsRef<Path>>(dir: P) -> Result<Vec<(String, PathBuf
         }
 
         if !is_markdown_file(&path) {
-            warn!("Skipping {} because it is not a markdown file", path.display());
+            warn!(
+                "Skipping {} because it is not a markdown file",
+                path.display()
+            );
             continue;
         }
 
-        let file_idx = path.file_stem()
-            .ok_or_else(|| Error::new(ErrorKind::Other, "Could not read file stem"))?.to_str()
+        let file_idx = path
+            .file_stem()
+            .ok_or_else(|| Error::new(ErrorKind::Other, "Could not read file stem"))?
+            .to_str()
             .ok_or_else(|| Error::new(ErrorKind::Other, "Could not read file stem as string"))?;
 
         let file_idx = file_idx.split('_').collect::<Vec<&str>>();
-        let file_idx = file_idx.first()
+        let file_idx = file_idx
+            .first()
             .ok_or_else(|| Error::new(ErrorKind::Other, "Could not get file index"))?;
         files.push((file_idx.to_string(), path));
-
     }
     Ok(files)
 }
@@ -105,32 +109,29 @@ pub fn fetch_file_indices<P: AsRef<Path>>(dir: P) -> Result<Vec<(String, PathBuf
 ///
 /// # Errors
 /// Returns an error if the index could not be parsed into an i32
-pub fn indices_and_paths_to_entries(indices_and_paths: Vec<(String, PathBuf)>) -> Result<Vec<FileEntry>, ParseIntError> {
+pub fn indices_and_paths_to_entries(
+    indices_and_paths: Vec<(String, PathBuf)>,
+) -> Result<Vec<FileEntry>, ParseIntError> {
     let mut entries = Vec::<FileEntry>::new();
     for (str_idx, file_path) in indices_and_paths {
         trace!("Parsing index {} for file {}", str_idx, file_path.display());
         let idx = str_idx.parse::<i32>()?;
-        entries.push(FileEntry {
-            idx,
-            file_path,
-        });
+        entries.push(FileEntry { idx, file_path });
     }
     Ok(entries)
 }
 
 #[cfg(test)]
 mod test {
-    use std::fs::File;
-    use std::io::Write;
-    use std::iter::zip;
-    use tempfile::{tempdir};
     use super::*;
+    use std::fs::File;
+    use tempfile::tempdir;
 
     /// Creates a String from a &str
     macro_rules! hs {
         ($s:expr) => {
             String::from($s)
-        }
+        };
     }
 
     #[test]
@@ -159,7 +160,7 @@ mod test {
     fn test_is_markdown_file() {
         let md_file_name = PathBuf::from("/a/b/c/file.md");
         let not_md_file_name = PathBuf::from("/a/b/c/file.txt");
-        let definitely_not_md  = PathBuf::from("/a/b/c/file");
+        let definitely_not_md = PathBuf::from("/a/b/c/file");
         assert!(is_markdown_file(&md_file_name));
         assert!(!is_markdown_file(&not_md_file_name));
         assert!(!is_markdown_file(&definitely_not_md));
@@ -179,7 +180,10 @@ mod test {
 
         let indices_and_paths = fetch_file_indices(tmp_dir.path()).unwrap();
 
-        let just_indices: Vec<String> = indices_and_paths.iter().map(|(idx, _)| idx.clone()).collect();
+        let just_indices: Vec<String> = indices_and_paths
+            .iter()
+            .map(|(idx, _)| idx.clone())
+            .collect();
         assert_eq!(indices_and_paths.len(), 3);
         assert!(just_indices.contains(&"0".to_string()));
         assert!(just_indices.contains(&"1".to_string()));
@@ -253,7 +257,6 @@ mod test {
         assert!(indices_and_paths.unwrap().is_empty());
 
         tmp_dir.close().unwrap();
-
     }
 
     #[test]
@@ -273,9 +276,8 @@ mod test {
 
     #[test]
     fn test_bad_indices_and_paths_to_entires() {
-        let bad_indices_and_paths = vec![
-            (hs!("not int"), PathBuf::from("/doesnt/really/matter/lol"))
-        ];
+        let bad_indices_and_paths =
+            vec![(hs!("not int"), PathBuf::from("/doesnt/really/matter/lol"))];
         let entries = indices_and_paths_to_entries(bad_indices_and_paths);
         assert!(entries.is_err());
     }

@@ -1,14 +1,14 @@
+use crate::conf::ArgumentError;
+use crate::val::ValError;
 use core::fmt;
 use std::error::Error;
 use std::io;
 use std::num::ParseIntError;
-use crate::conf::ArgumentError;
-use crate::val::ValError;
 
 // todo: support error kinds
 pub struct AppError {
     pub message: String, // todo: message is a bit misleading
-    pub description: String
+    pub description: String,
 }
 
 impl fmt::Debug for AppError {
@@ -27,7 +27,7 @@ impl AppError {
     pub fn new(message: &str) -> AppError {
         AppError {
             message: message.to_string(),
-            description: message.to_string()
+            description: message.to_string(),
         }
     }
 }
@@ -42,7 +42,7 @@ impl From<io::Error> for AppError {
     fn from(err: io::Error) -> Self {
         Self {
             message: "IO Error".to_string(),
-            description: err.to_string()
+            description: err.to_string(),
         }
     }
 }
@@ -51,7 +51,7 @@ impl From<ParseIntError> for AppError {
     fn from(err: ParseIntError) -> Self {
         Self {
             message: "Parse Error (int)".to_string(),
-            description: err.to_string()
+            description: err.to_string(),
         }
     }
 }
@@ -60,7 +60,7 @@ impl From<serde_yaml::Error> for AppError {
     fn from(err: serde_yaml::Error) -> Self {
         Self {
             message: "Parse Error (yaml)".to_string(),
-            description: err.to_string()
+            description: err.to_string(),
         }
     }
 }
@@ -69,7 +69,7 @@ impl From<ValError> for AppError {
     fn from(err: ValError) -> Self {
         Self {
             message: "Validation Error".to_string(),
-            description: err
+            description: err,
         }
     }
 }
@@ -78,7 +78,7 @@ impl From<ArgumentError> for AppError {
     fn from(err: ArgumentError) -> Self {
         Self {
             message: format!("Arg error: {}", err.0),
-            description: err.1
+            description: err.1,
         }
     }
 }
@@ -87,15 +87,15 @@ impl From<tera::Error> for AppError {
     fn from(err: tera::Error) -> Self {
         Self {
             message: "Template Engine Error".to_string(),
-            description: err.to_string()
+            description: err.to_string(),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::collections::BTreeMap;
     use super::*;
+    use std::collections::BTreeMap;
     #[test]
     fn test_apperror_fmt_debug() {
         let err = AppError::new("test");
@@ -128,8 +128,8 @@ mod test {
 
     #[test]
     fn test_from_serde_yaml_error() {
-        let bad_yaml_err = serde_yaml::from_str::
-        <BTreeMap<String, String>>("invalid_yaml|").unwrap_err();
+        let bad_yaml_err =
+            serde_yaml::from_str::<BTreeMap<String, String>>("invalid_yaml|").unwrap_err();
         let err = AppError::from(bad_yaml_err);
         assert!(err.to_string().contains("Parse Error (yaml)"));
     }
@@ -152,5 +152,4 @@ mod test {
         let err = AppError::from(err);
         assert_eq!(err.to_string(), "Template Engine Error: welp");
     }
-
 }

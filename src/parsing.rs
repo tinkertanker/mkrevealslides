@@ -1,6 +1,5 @@
 use pulldown_cmark::{Event, LinkType, Options, Parser, Tag};
 
-
 /// Parses some markdown contents and only pulls out image links.
 ///
 /// # Arguments
@@ -27,7 +26,6 @@ pub fn grab_image_links(md_contents: &str) -> Vec<String> {
         }
     }
     results
-
 }
 
 /// Given some links, pulls out only local links.
@@ -78,7 +76,8 @@ foo
 ![some_image](path/to/image.png "image desc")
 
 bar
-        "#.to_string();
+        "#
+        .to_string();
         let results = grab_image_links(&md_contents);
         assert_eq!(results.len(), 3);
         assert_eq!(results[0], "image_3.png");
@@ -104,5 +103,4 @@ bar
         let results = get_local_links(links);
         assert_eq!(results.len(), 7);
     }
-
 }

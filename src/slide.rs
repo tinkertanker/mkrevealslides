@@ -1,13 +1,13 @@
-use std::{fs, io};
-use std::path::PathBuf;
 use crate::parsing::{get_local_links, grab_image_links};
+use std::path::PathBuf;
+use std::{fs, io};
 
 // todo: investigate whether adding serialize and deserialize is better than having a render method.
 pub struct Slide {
     pub contents: String,
     /// `None` means that `contents` has not been parsed yet
     /// If this is `Some`, the local_images may still be empty if there are no local images
-    pub local_images: Option<Vec<String>>
+    pub local_images: Option<Vec<String>>,
 }
 
 impl Slide {
@@ -22,7 +22,7 @@ impl Slide {
     pub fn new(contents: String) -> Self {
         Self {
             contents,
-            local_images: None
+            local_images: None,
         }
     }
 
@@ -46,9 +46,9 @@ impl Slide {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use std::fs::File;
     use std::io::Write;
-    use super::*;
     use tempfile::tempdir;
 
     #[test]
@@ -64,7 +64,6 @@ This is a markdown slide, used for testing.
         h_slide_file.write_all(slide_contents.as_bytes()).unwrap();
         let slide = Slide::from_file(&slide_file).unwrap();
         assert_eq!(slide.contents, slide_contents);
-
     }
 
     #[test]

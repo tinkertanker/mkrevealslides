@@ -1,14 +1,14 @@
-use tera::{Context, Tera};
-use tracing::{debug, trace};
 use crate::conf::PresentationConfig;
 use crate::error_handling::AppError;
 use crate::slide::Slide;
+use tera::{Context, Tera};
+use tracing::{debug, trace};
 
 pub struct Presentation {
     pub title: String,
     /// Contains the contents of the template to use for the presentation
     pub template: String,
-    pub slides: Vec<Slide>
+    pub slides: Vec<Slide>,
 }
 
 impl Presentation {
@@ -35,7 +35,7 @@ impl Presentation {
         Ok(Self {
             title: config.title.clone(),
             template,
-            slides
+            slides,
         })
     }
 
@@ -49,7 +49,8 @@ impl Presentation {
     pub fn render(&self) -> Result<String, tera::Error> {
         let mut ctx = Context::new();
 
-        let slide_contents = self.slides
+        let slide_contents = self
+            .slides
             .iter()
             .map(|s| s.render())
             .collect::<Vec<String>>();
@@ -70,26 +71,43 @@ impl Presentation {
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::presentation::Presentation;
-    use crate::slide::Slide;
+    use super::*;
 
     #[test]
     fn test_render() {
         let slides = vec![
             Slide::new("slide 1".to_string()),
             Slide::new("slide 2".to_string()),
-            Slide::new("slide 3".to_string())
+            Slide::new("slide 3".to_string()),
         ];
         let ppt = Presentation {
             title: "Test Presentation".to_string(),
-            template: "{{ slide_title }} {%for fc in ingested_files %}'{{fc}}'{%endfor%}".to_string(),
-            slides
+            template: "{{ slide_title }} {%for fc in ingested_files %}'{{fc}}'{%endfor%}"
+                .to_string(),
+            slides,
         };
         let render_result = ppt.render().unwrap();
-        assert_eq!(render_result, "Test Presentation 'slide 1''slide 2''slide 3'");
-
+        assert_eq!(
+            render_result,
+            "Test Presentation 'slide 1''slide 2''slide 3'"
+        );
     }
+
+    // #[test]
+    // fn test_from_config() {
+    //     let cfg = PresentationConfig {
+    //         title: "Test Presentation".to_string(),
+    //         slide_dir: Default::default(),
+    //         output_file: Default::default(),
+    //         template_file: "test_template.html".to_string(),
+    //         slides: vec![
+    //             "test_slide1.md".to_string(),
+    //             "test_slide2.md".to_string(),
+    //             "test_slide3.md".to_string()
+    //         ],
+    //         include_files: None
+    //     };
+    // }
 }

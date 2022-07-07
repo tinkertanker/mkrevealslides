@@ -11,7 +11,7 @@ pub fn validate_file_path(s: &str) -> Result<PathBuf, ValError> {
         return Err(format!("File {} does not exist", pb.display()));
     }
     if pb.is_file() {
-         Ok(pb)
+        Ok(pb)
     } else {
         Err(format!("{} is not a file", s))
     }
@@ -24,7 +24,7 @@ pub fn validate_dir_path(s: &str) -> Result<PathBuf, ValError> {
         return Err(format!("Directory {} does not exist", pb.display()));
     }
     if pb.is_dir() {
-         Ok(pb)
+        Ok(pb)
     } else {
         Err(format!("{} is not a directory", s))
     }
@@ -32,10 +32,10 @@ pub fn validate_dir_path(s: &str) -> Result<PathBuf, ValError> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use std::fs;
     use std::fs::File;
-    use super::*;
-    use tempfile::{tempdir};
+    use tempfile::tempdir;
 
     #[test]
     fn test_validate_file_path() {
