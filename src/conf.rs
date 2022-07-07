@@ -74,13 +74,7 @@ impl SlideConfig {
         let title = args.get_one::<String>("title").ok_or_else(|| {
             ("title".to_string(), "Title is required".to_string())
         })?.clone();
-        // let entries = fetch_file_indices(&slide_dir)?;
-        // let entries = indices_and_paths_to_entries(entries)?;
-        // let files_to_process = build_proc_pq(entries);
-        //
-        // let paths = just_file_paths(&files_to_process);
-        // let include_files = paths.iter().map(|x| x.display().to_string());
-        // let include_files = Some(include_files.collect());
+
         let include_files = find_included_slides(&slide_dir)?;
         let include_files = grab_file_names_from_pathbufs(&include_files)?;
 
