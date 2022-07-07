@@ -1,11 +1,11 @@
 use crate::error_handling::AppError;
 use crate::val::validate_file_path;
-use crate::{fetch_file_indices, indices_and_paths_to_entries};
 use clap::ArgMatches;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 use tracing::trace;
+use crate::io::{fetch_file_indices, indices_and_paths_to_entries};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PresentationConfig {
