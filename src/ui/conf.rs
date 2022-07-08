@@ -59,7 +59,7 @@ impl PresentationConfigFile {
 
 #[cfg(test)]
 mod test {
-    use std::fs::File;
+    
     use super::*;
     use tempfile::tempdir;
 

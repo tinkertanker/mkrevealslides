@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 use std::fs;
 
-use std::io::{Error, ErrorKind};
+use std::io::{Error};
 
 use std::path::{Path, PathBuf};
 
 use crate::error_handling::AppError;
-use tracing::{error, trace, warn};
+use tracing::{trace};
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
 #[derive(PartialEq)]

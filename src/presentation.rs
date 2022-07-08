@@ -2,7 +2,7 @@ use std::fs;
 use crate::error_handling::AppError;
 use crate::slide::Slide;
 use tera::{Context, Tera};
-use tracing::{debug, trace};
+use tracing::{trace};
 use crate::ui::PresentationConfig;
 
 pub struct Presentation {

@@ -3,7 +3,7 @@ use mkrevealslides::presentation::Presentation;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+
 use tempfile::tempdir;
 use mkrevealslides::ui::PresentationConfig;
 
@@ -24,7 +24,7 @@ fn test_presentation_from_config() {
     let mut h_slide_file_3 = File::create(&slide_file_3).unwrap();
     h_slide_file_3.write_all(b"Slide 3").unwrap();
 
-    let output_file = tmp_dir.path().join("output.html");
+    let _output_file = tmp_dir.path().join("output.html");
 
     let template_contents = "{{ slide_title }} {%for fc in ingested_files %}'{{fc}}'{%endfor%}";
     let template_file = tmp_dir.path().join("template.html");
