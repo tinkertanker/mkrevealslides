@@ -1,8 +1,8 @@
 pub mod io;
 pub mod parsing;
 
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 
 use crate::slide::parsing::{get_local_links, grab_image_links};
 

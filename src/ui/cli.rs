@@ -1,15 +1,13 @@
+use clap::{Parser, Subcommand};
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
 use std::path::PathBuf;
-use clap::{Parser, Subcommand};
 use tracing::Level;
-
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
 pub struct CliArgs {
-
     /// Increase the level of tracing/logging.
     #[clap(short, long, parse(from_occurrences))]
     pub verbose: usize,
@@ -25,7 +23,7 @@ pub enum Commands {
     FromConfig {
         /// Path to your config file
         #[clap(parse(from_os_str))]
-        config_path: PathBuf
+        config_path: PathBuf,
     },
     /// Creates your presentation from CLI arguments
     FromCli {
@@ -45,11 +43,10 @@ pub enum Commands {
         #[clap(parse(from_os_str))]
         output_dir: PathBuf,
 
-
         /// Output filename to use
         #[clap(parse(from_os_str), default_value = "index.html")]
         output_file: PathBuf,
-    }
+    },
 }
 
 /// Checks if the given path is
@@ -61,7 +58,11 @@ fn dir_exists(s: &OsStr) -> Result<PathBuf, String> {
     if path.is_dir() {
         match fs::read_dir(&path) {
             Ok(_) => Ok(path),
-            Err(e) => Err(format!("Could not read directory `{}`: {}", path.display(), e)),
+            Err(e) => Err(format!(
+                "Could not read directory `{}`: {}",
+                path.display(),
+                e
+            )),
         }
     } else if !path.exists() {
         Err(format!("`{}` does not exist", path.display()))
@@ -81,15 +82,21 @@ fn validate_slide_dir(slide_dir: &OsStr) -> Result<PathBuf, String> {
     match path_to_dir.read_dir() {
         Ok(mut dir) => {
             if dir.next().is_none() {
-                return Err(format!("`{}` is empty", path_to_dir.display()))
+                return Err(format!("`{}` is empty", path_to_dir.display()));
             }
             for dir_entry in dir {
-                if let Err(e) = dir_entry { return Err(e.to_string()) }
+                if let Err(e) = dir_entry {
+                    return Err(e.to_string());
+                }
             }
             Ok(path_to_dir)
-        },
+        }
         Err(e) => {
-            return Err(format!("Could not read directory `{}`: {}", path_to_dir.display(), e))
+            return Err(format!(
+                "Could not read directory `{}`: {}",
+                path_to_dir.display(),
+                e
+            ))
         }
     }
 }
@@ -103,7 +110,7 @@ fn file_exists(s: &OsStr) -> Result<PathBuf, String> {
     if path.is_file() {
         match File::open(&path) {
             Ok(_) => Ok(path),
-            Err(e) => Err(format!("Could not open file: `{}`", e))
+            Err(e) => Err(format!("Could not open file: `{}`", e)),
         }
     } else if !path.exists() {
         Err(format!("`{}` does not exist", path.display()))

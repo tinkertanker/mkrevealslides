@@ -1,9 +1,8 @@
 use crate::error_handling::AppError;
 use serde::Deserialize;
-use std::{fs};
+use std::fs;
 use std::path::PathBuf;
 use tracing::trace;
-
 
 /// A PresentationConfigFile which has been deserialized
 #[derive(Debug, Deserialize)]
@@ -43,11 +42,9 @@ impl PresentationConfigFile {
         );
         let config_str = fs::read_to_string(&config_file_path)?;
         trace!("Config file read: {} bytes", config_str.len());
-        let config_parent_dir = &config_file_path.parent().ok_or_else(|| {
-            AppError::new(
-                "Could not find parent directory of config file"
-            )
-        })?;
+        let config_parent_dir = &config_file_path
+            .parent()
+            .ok_or_else(|| AppError::new("Could not find parent directory of config file"))?;
 
         let mut config: Self = serde_yaml::from_str(&config_str)?;
 
@@ -59,7 +56,7 @@ impl PresentationConfigFile {
 
 #[cfg(test)]
 mod test {
-    
+
     use super::*;
     use tempfile::tempdir;
 
@@ -81,6 +78,5 @@ template_file: "template.html"
         assert_eq!(cfg.output_file, PathBuf::from("output.html"));
         assert_eq!(cfg.template_file, PathBuf::from("template.html"));
         assert_eq!(cfg.working_directory, tmp_dir.path());
-
     }
 }

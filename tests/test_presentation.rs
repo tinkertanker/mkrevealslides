@@ -1,11 +1,11 @@
-use mkrevealslides::ui::conf::PresentationConfigFile;
 use mkrevealslides::presentation::Presentation;
+use mkrevealslides::ui::conf::PresentationConfigFile;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 
-use tempfile::tempdir;
 use mkrevealslides::ui::PresentationConfig;
+use tempfile::tempdir;
 
 #[test]
 fn test_presentation_from_config() {

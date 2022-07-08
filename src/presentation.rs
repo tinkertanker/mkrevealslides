@@ -1,9 +1,9 @@
-use std::fs;
 use crate::error_handling::AppError;
 use crate::slide::Slide;
-use tera::{Context, Tera};
-use tracing::{trace};
 use crate::ui::PresentationConfig;
+use std::fs;
+use tera::{Context, Tera};
+use tracing::trace;
 
 pub struct Presentation {
     /// The title of the presentation
@@ -18,23 +18,26 @@ pub struct Presentation {
 /// producing a presentation
 impl TryFrom<PresentationConfig> for Presentation {
     type Error = std::io::Error;
-    
+
     /// Attempts to parse the PresentationConfig and read all the necessary details in
     /// producing a presentation
-    /// 
+    ///
     /// # Arguments
     /// * `config` - The PresentationConfig to parse
-    /// 
+    ///
     /// # Returns
     /// A Presentation if the config is valid
-    /// 
+    ///
     /// # Errors
     /// - If the slides could not be read
     /// - If the template could not be read
     fn try_from(config: PresentationConfig) -> Result<Self, Self::Error> {
         trace!("Attempting to parse PresentationConfig");
         trace!("Presentation title: {}", config.title);
-        trace!("Reading template_file at `{}`", config.output_file.display());
+        trace!(
+            "Reading template_file at `{}`",
+            config.output_file.display()
+        );
         let template = fs::read_to_string(&config.template_file)?;
         trace!("Template file read: {} bytes", template.len());
         trace!("Reading {} slides", config.include_files.len());
@@ -51,13 +54,12 @@ impl TryFrom<PresentationConfig> for Presentation {
         Ok(Self {
             title: config.title,
             template,
-            slides
+            slides,
         })
     }
 }
 
 impl Presentation {
-
     /// Renders the presentation into a string
     ///
     /// # Returns

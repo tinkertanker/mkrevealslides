@@ -14,7 +14,7 @@ impl ArgumentError {
         ArgumentError {
             arg,
             value: value.to_string(),
-            reason
+            reason,
         }
     }
 }
@@ -141,13 +141,11 @@ mod test {
 
     #[test]
     fn test_from_argument_error() {
-        let err = AppError::from(
-            ArgumentError {
-                arg: "arg0".to_string(),
-                value: "test_value".to_string(),
-                reason: "test_reason".to_string(),
-            }
-        );
+        let err = AppError::from(ArgumentError {
+            arg: "arg0".to_string(),
+            value: "test_value".to_string(),
+            reason: "test_reason".to_string(),
+        });
         assert_eq!(err.to_string(), "Arg error [arg0=>test_value]: test_reason");
     }
 

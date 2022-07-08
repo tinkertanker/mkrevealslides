@@ -1,18 +1,18 @@
 use std::cmp::Ordering;
 use std::fs;
 
-use std::io::{Error};
+use std::io::Error;
 
 use std::path::{Path, PathBuf};
 
 use crate::error_handling::AppError;
-use tracing::{trace};
+use tracing::trace;
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
 #[derive(PartialEq)]
 struct SlideFile {
     filename: String,
-    path: PathBuf
+    path: PathBuf,
 }
 
 impl PartialOrd for SlideFile {
@@ -29,7 +29,6 @@ impl Ord for SlideFile {
 
 impl Eq for SlideFile {}
 
-
 impl SlideFile {
     /// Creates a list of SlideFiles from paths
     /// # Arguments
@@ -44,21 +43,20 @@ impl SlideFile {
     fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, AppError> {
         let mut slides = Vec::new();
         for path in paths {
-            let filename = path.file_name().ok_or_else(|| {
-                AppError {
+            let filename = path
+                .file_name()
+                .ok_or_else(|| AppError {
                     error_kind: "Invalid file name".to_string(),
-                    description: "How on earth did you manage to get your file named that?".to_string()
-                }
-            })?.to_str().ok_or_else(|| {
-                AppError {
+                    description: "How on earth did you manage to get your file named that?"
+                        .to_string(),
+                })?
+                .to_str()
+                .ok_or_else(|| AppError {
                     error_kind: "Not UTF-8".to_string(),
-                    description: format!("Filename at `{}` is not UTF-8!", path.display())
-                }
-            })?.to_string();
-            slides.push(SlideFile {
-                filename,
-                path
-            });
+                    description: format!("Filename at `{}` is not UTF-8!", path.display()),
+                })?
+                .to_string();
+            slides.push(SlideFile { filename, path });
         }
         Ok(slides)
     }
@@ -80,19 +78,19 @@ impl SlideFile {
         if !self.path.exists() {
             return Err(AppError {
                 error_kind: "File does not exist".to_string(),
-                description: format!("File at `{}` does not exist!", self.path.display())
+                description: format!("File at `{}` does not exist!", self.path.display()),
             });
         }
         if !self.path.is_file() {
             return Err(AppError {
                 error_kind: "Not a file".to_string(),
-                description: format!("File at `{}` is not a file!", self.path.display())
+                description: format!("File at `{}` is not a file!", self.path.display()),
             });
         }
         if !is_markdown_file(&self.path) {
             return Err(AppError {
                 error_kind: "Not a markdown file".to_string(),
-                description: format!("File at `{}` is not a markdown file!", self.path.display())
+                description: format!("File at `{}` is not a markdown file!", self.path.display()),
             });
         }
         Ok(())
@@ -103,7 +101,6 @@ impl SlideFile {
 pub fn is_markdown_file(fp: &Path) -> bool {
     fp.extension().unwrap_or_default().to_ascii_lowercase() == "md"
 }
-
 
 /// Attempts to find slides in the given directory
 ///
@@ -169,7 +166,6 @@ mod test {
         assert!(!is_markdown_file(&definitely_not_md));
     }
 
-
     #[test]
     fn test_find_included_slides() {
         let slides_dir = tempdir().unwrap();
@@ -205,10 +201,7 @@ mod test {
         let file_names = grab_file_names_from_path_bufs(&paths).unwrap();
         assert_eq!(
             file_names,
-            vec![
-                PathBuf::from("file4.txt"),
-                PathBuf::from("file_no_ext")
-            ]
+            vec![PathBuf::from("file4.txt"), PathBuf::from("file_no_ext")]
         );
     }
 }
