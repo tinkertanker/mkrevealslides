@@ -1,5 +1,5 @@
 use crate::error_handling::{AppError, ArgumentError};
-use crate::slide::io::{find_slides, is_markdown_file};
+use crate::slide::io::{find_slides, is_markdown_file, SlideFile};
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
 use std::path::PathBuf;
@@ -22,7 +22,7 @@ pub struct PresentationConfig {
     /// Absolute path to the template file
     pub template_file: PathBuf,
     /// Absolute paths to files to include in the presentation
-    pub include_files: Vec<PathBuf>,
+    pub include_files: Vec<SlideFile>,
 }
 
 impl PresentationConfig {
@@ -98,38 +98,8 @@ impl PresentationConfig {
         }
         trace!("Checking include_files");
         for include_file in &self.include_files {
-            if !include_file.is_absolute() {
-                return Err(AppError::from(ArgumentError::new(
-                    "include_files".to_string(),
-                    include_file.to_str().unwrap_or("<invalid path>"),
-                    "Include file must be an absolute path".to_string(),
-                )));
-            }
-            // does it exist and is it a file?
-            if !include_file.is_file() {
-                return if include_file.is_dir() {
-                    // We'll give a more helpful error message if it was actually a directory
-                    Err(AppError::from(ArgumentError::new(
-                        "include_files".to_string(),
-                        include_file.to_str().unwrap_or("<invalid path>"),
-                        "Include file is a directory, but must be a file".to_string(),
-                    )))
-                } else {
-                    Err(AppError::from(ArgumentError::new(
-                        "include_files".to_string(),
-                        include_file.to_str().unwrap_or("<invalid path>"),
-                        "Include file does not exist or cannot be read".to_string(),
-                    )))
-                };
-            }
-            // Okay, it exists and is a file. Is it a markdown file?
-            if !is_markdown_file(include_file) {
-                return Err(AppError::from(ArgumentError::new(
-                    "include_files".to_string(),
-                    include_file.to_str().unwrap_or("<invalid path>"),
-                    "Include file is not a markdown file".to_string(),
-                )));
-            }
+            trace!("Checking include_file: {:?}", include_file);
+            include_file.validate()?;
         }
         Ok(())
     }
@@ -195,7 +165,11 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
             // let's try to search for slides
             find_slides(&config.working_directory.join(config.slide_dir))?
         } else {
-            include_files_abs_paths
+            let mut sf = include_files_abs_paths.iter().map(|fp| {
+                SlideFile::try_from(fp.clone())
+            }).collect::<Result<Vec<SlideFile>, AppError>>()?;
+            sf.sort();
+            sf
         };
 
         let cfg = PresentationConfig {

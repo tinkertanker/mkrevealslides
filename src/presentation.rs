@@ -5,6 +5,7 @@ use std::fs;
 use tera::{Context, Tera};
 use tracing::trace;
 
+#[derive(Debug)]
 pub struct Presentation {
     /// The title of the presentation
     pub title: String,
@@ -17,7 +18,7 @@ pub struct Presentation {
 /// Attempts to parse the PresentationConfig and read all the necessary details in
 /// producing a presentation
 impl TryFrom<PresentationConfig> for Presentation {
-    type Error = std::io::Error;
+    type Error = AppError;
 
     /// Attempts to parse the PresentationConfig and read all the necessary details in
     /// producing a presentation
@@ -43,9 +44,9 @@ impl TryFrom<PresentationConfig> for Presentation {
         trace!("Reading {} slides", config.include_files.len());
         let slides = {
             let mut slides = Vec::new();
-            for pth in &config.include_files {
-                trace!("Reading slide at `{}`", pth.display());
-                let slide = Slide::from_file(pth)?;
+            for slide_file in config.include_files {
+                trace!("Reading slide at `{}`", slide_file.path.display());
+                let slide = Slide::try_from(slide_file)?;
                 slides.push(slide);
             }
             slides
@@ -87,8 +88,21 @@ impl Presentation {
     ///
     /// Optionally, copies any local images to the destination directory
     /// Optionally, downloads revealJS libs and generates the zip too
-    pub fn package(&self) -> Result<(), AppError> {
-        todo!()
+    pub fn package(&mut self) -> Result<(), AppError> {
+        for slide in &mut self.slides {
+            slide.parse();
+            // safe to unwrap because we just parsed the slide
+            let local_images = slide.local_images.as_ref().unwrap();
+            if local_images.is_empty() {
+                continue;
+            }
+            for img in local_images {
+                println!("Copying {}", img);
+                // fs::copy(src, dst)?;
+            }
+        }
+        println!("{:?}", self.slides);
+        Ok(())
     }
 }
 

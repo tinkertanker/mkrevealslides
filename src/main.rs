@@ -17,8 +17,9 @@ fn main() -> Result<(), AppError> {
         .init();
     let ppt_config = PresentationConfig::try_from(cli_args)?;
     let dest_path = &ppt_config.output_file.clone();
-    let ppt = Presentation::try_from(ppt_config)?;
+    let mut ppt = Presentation::try_from(ppt_config)?;
     let output_content = ppt.render()?;
+    ppt.package()?;
     debug!("Attempting write to file: {}", dest_path.display());
     fs::write(dest_path, output_content)?;
     println!("Wrote output to {}", dest_path.display());

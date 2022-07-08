@@ -9,10 +9,11 @@ use crate::error_handling::AppError;
 use tracing::trace;
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
-#[derive(PartialEq)]
-struct SlideFile {
+#[derive(PartialEq, Debug, Clone)]
+pub struct SlideFile {
     filename: String,
-    path: PathBuf,
+    /// Absolute path to where this slideFile is located
+    pub path: PathBuf,
 }
 
 impl PartialOrd for SlideFile {
@@ -29,6 +30,32 @@ impl Ord for SlideFile {
 
 impl Eq for SlideFile {}
 
+impl TryFrom<PathBuf> for SlideFile {
+    type Error = AppError;
+
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        let filename = path
+            .file_name()
+            .ok_or_else(|| AppError {
+                error_kind: "Invalid file name".to_string(),
+                description: "How on earth did you manage to get your file named that?"
+                    .to_string(),
+            })?
+            .to_str()
+            .ok_or_else(|| AppError {
+                error_kind: "Not UTF-8".to_string(),
+                description: format!("Filename at `{}` is not UTF-8!", path.display()),
+            })?
+            .to_string();
+        let sf = Self {
+            filename,
+            path,
+        };
+        sf.validate()?;
+        Ok(sf)
+    }
+}
+
 impl SlideFile {
     /// Creates a list of SlideFiles from paths
     /// # Arguments
@@ -41,24 +68,10 @@ impl SlideFile {
     /// - If a slide file has an invalid file name
     /// - If a slide file has a filename that is not UTF-8 compatible
     fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, AppError> {
-        let mut slides = Vec::new();
-        for path in paths {
-            let filename = path
-                .file_name()
-                .ok_or_else(|| AppError {
-                    error_kind: "Invalid file name".to_string(),
-                    description: "How on earth did you manage to get your file named that?"
-                        .to_string(),
-                })?
-                .to_str()
-                .ok_or_else(|| AppError {
-                    error_kind: "Not UTF-8".to_string(),
-                    description: format!("Filename at `{}` is not UTF-8!", path.display()),
-                })?
-                .to_string();
-            slides.push(SlideFile { filename, path });
-        }
-        Ok(slides)
+        paths
+            .into_iter()
+            .map(SlideFile::try_from)
+            .collect::<Result<Vec<SlideFile>, AppError>>()
     }
 
     /// Attempts to validate the SlideFile
@@ -74,7 +87,14 @@ impl SlideFile {
     /// - If the slide file does not exist
     /// - If the slide file is not a file
     /// - If the slide file is not a markdown file
-    fn validate(&self) -> Result<(), AppError> {
+    pub fn validate(&self) -> Result<(), AppError> {
+        // todo: return ValidationError
+        if !self.path.is_absolute() {
+            return Err(AppError {
+                error_kind: "Not absolute".to_string(),
+                description: format!("Path `{}` is not absolute!", self.path.display()),
+            });
+        }
         if !self.path.exists() {
             return Err(AppError {
                 error_kind: "File does not exist".to_string(),
@@ -112,18 +132,15 @@ pub fn is_markdown_file(fp: &Path) -> bool {
 ///
 /// # Errors
 /// Returns an error if the slide directory could not be read
-/// Returns an error if the indices could not be converted
-pub fn find_slides(slide_dir: &PathBuf) -> Result<Vec<PathBuf>, AppError> {
+pub fn find_slides(slide_dir: &PathBuf) -> Result<Vec<SlideFile>, AppError> {
     trace!("Finding slides in {}", slide_dir.display());
-    let mut slides = Vec::new();
     let files = list_directory(slide_dir, true)?;
     let mut slide_files = SlideFile::from_paths(files)?;
     slide_files.sort();
-    for slide_file in slide_files {
+    for slide_file in &slide_files {
         slide_file.validate()?;
-        slides.push(slide_file.path);
     }
-    Ok(slides)
+    Ok(slide_files)
 }
 
 /// Lists a given directory
@@ -167,6 +184,7 @@ mod test {
     }
 
     #[test]
+    #[skip]
     fn test_find_included_slides() {
         let slides_dir = tempdir().unwrap();
         let slides_dir = fs::canonicalize(slides_dir.path()).unwrap();

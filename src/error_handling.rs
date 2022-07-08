@@ -9,6 +9,17 @@ pub struct ArgumentError {
     pub reason: String,
 }
 
+pub struct ValidationError {
+    pub value: String,
+    pub reason: String
+}
+
+impl ValidationError {
+    pub fn new(value: &str, reason: String) -> Self {
+        Self { value: value.to_string(), reason }
+    }
+}
+
 impl ArgumentError {
     pub fn new(arg: String, value: &str, reason: String) -> Self {
         ArgumentError {
@@ -92,6 +103,15 @@ impl From<ArgumentError> for AppError {
     fn from(err: ArgumentError) -> Self {
         Self {
             error_kind: format!("Arg error [{}=>{}]", err.arg, err.value),
+            description: err.reason,
+        }
+    }
+}
+
+impl From<ValidationError> for AppError {
+    fn from(err: ValidationError) -> Self {
+        Self {
+            error_kind: format!("Validation error [=>{}]", err.value),
             description: err.reason,
         }
     }
