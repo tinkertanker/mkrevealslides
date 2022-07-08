@@ -1,43 +1,62 @@
-use crate::conf::PresentationConfig;
+use std::fs;
 use crate::error_handling::AppError;
 use crate::slide::Slide;
 use tera::{Context, Tera};
 use tracing::{debug, trace};
+use crate::ui::PresentationConfig;
 
 pub struct Presentation {
+    /// The title of the presentation
     pub title: String,
     /// Contains the contents of the template to use for the presentation
     pub template: String,
+    /// Contains the slides, in order, to include in the presentation
     pub slides: Vec<Slide>,
 }
 
-impl Presentation {
-    /// Creates a new Presentation object from a PresentationConfig
-    /// Upon construction, this will read the template file's contents,
-    /// and all the contents of the slides.
-    ///
+/// Attempts to parse the PresentationConfig and read all the necessary details in
+/// producing a presentation
+impl TryFrom<PresentationConfig> for Presentation {
+    type Error = std::io::Error;
+    
+    /// Attempts to parse the PresentationConfig and read all the necessary details in
+    /// producing a presentation
+    /// 
+    /// # Arguments
+    /// * `config` - The PresentationConfig to parse
+    /// 
+    /// # Returns
+    /// A Presentation if the config is valid
+    /// 
     /// # Errors
-    /// Returns an error if the template file could not be read
-    /// Returns an error if the slides could not be read
-    pub fn from_config(config: &PresentationConfig) -> Result<Self, AppError> {
-        let template = std::fs::read_to_string(&config.template_file)?;
-        debug!("Template read: {} bytes", template.len());
+    /// - If the slides could not be read
+    /// - If the template could not be read
+    fn try_from(config: PresentationConfig) -> Result<Self, Self::Error> {
+        trace!("Attempting to parse PresentationConfig");
+        trace!("Presentation title: {}", config.title);
+        trace!("Reading template_file at `{}`", config.output_file.display());
+        let template = fs::read_to_string(&config.template_file)?;
+        trace!("Template file read: {} bytes", template.len());
+        trace!("Reading {} slides", config.include_files.len());
         let slides = {
             let mut slides = Vec::new();
             for pth in &config.include_files {
-                trace!("Reading slide at {}", pth.display());
+                trace!("Reading slide at `{}`", pth.display());
                 let slide = Slide::from_file(pth)?;
                 slides.push(slide);
             }
             slides
         };
-        debug!("Read {} slides", slides.len());
+        trace!("Parsed {} slides", slides.len());
         Ok(Self {
-            title: config.title.clone(),
+            title: config.title,
             template,
-            slides,
+            slides
         })
     }
+}
+
+impl Presentation {
 
     /// Renders the presentation into a string
     ///

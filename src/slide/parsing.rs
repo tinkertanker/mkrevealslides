@@ -7,7 +7,7 @@ use pulldown_cmark::{Event, LinkType, Options, Parser, Tag};
 ///
 /// # Example
 /// ```rust
-/// use mkrevealslides::parsing::grab_image_links;
+/// use mkrevealslides::slide::parsing::grab_image_links;
 /// let markdown = "![alt text](https://example.com/image.png)\n![img2](https://example.com/image2.png)";
 /// let links = grab_image_links(markdown);
 /// assert_eq!(links, vec!["https://example.com/image.png", "https://example.com/image2.png"]);
@@ -35,7 +35,7 @@ pub fn grab_image_links(md_contents: &str) -> Vec<String> {
 ///
 /// # Example
 /// ```rust
-/// use mkrevealslides::parsing::get_local_links;
+/// use mkrevealslides::slide::parsing::get_local_links;
 /// let links = vec!["https://example.com/image.png".to_string(), "https://example.com/image2.png".to_string(), "/path/to/image.png".to_string()];
 ///
 /// let local_links = get_local_links(links);

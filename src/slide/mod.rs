@@ -1,7 +1,18 @@
-use crate::parsing::{get_local_links, grab_image_links};
-use std::path::PathBuf;
-use std::{fs, io};
+pub mod io;
+pub mod parsing;
 
+use std::path::PathBuf;
+use std::fs;
+
+use crate::slide::parsing::{get_local_links, grab_image_links};
+
+/// A single slide that can be used in a presentation.
+/// A slide has contents (which is in markdown)
+/// It may also contain local images
+///
+/// # Note
+/// Constructing a slide with contents does not automatically fill in local_images, and
+/// instead the `parse` method must be used to do so
 // todo: investigate whether adding serialize and deserialize is better than having a render method.
 pub struct Slide {
     pub contents: String,
@@ -12,9 +23,34 @@ pub struct Slide {
 
 impl Slide {
     /// Reads the contents of the given file and returns a Slide object
-    pub fn from_file(file_path: &PathBuf) -> Result<Self, io::Error> {
+    pub fn from_file(file_path: &PathBuf) -> Result<Self, std::io::Error> {
         let contents = fs::read_to_string(file_path)?;
         Ok(Self::new(contents))
+    }
+
+    /// Creates a list of slides from a list of file paths
+    ///
+    /// Note that this does not attempt to validate the files are actually valid,
+    /// and it will simply try to read it.
+    ///
+    /// It is recommend to combine this with `find_slides` to get a list of nice
+    /// and valid slide files.
+    ///
+    /// # Arguments
+    /// * `file_paths`: A list of file paths to slide files.
+    ///
+    /// # Returns
+    /// A list of slides.
+    ///
+    /// # Errors
+    /// IO Errors
+    pub fn from_files(file_paths: &Vec<PathBuf>) -> Result<Vec<Self>, std::io::Error> {
+        let mut slides = Vec::new();
+        for file_path in file_paths {
+            let slide = Slide::from_file(file_path)?;
+            slides.push(slide);
+        }
+        Ok(slides)
     }
 
     /// Creates a new `Slide` from contents

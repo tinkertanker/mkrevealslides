@@ -12,17 +12,17 @@ In rough order of priority
 - [x] Better UI
 - [x] Check if the file is actually a `.md` file
 - [x] Superior error handling that does not involve CRASHING the program
-  - [ ] More helpful error messages 
+  - [x] More helpful error messages 
 - [x] Configuration file support
     - [x] Force paths relative to config file dir instead of invocation dir
 - [ ] Support markdown images
-- [ ] Support slide 1a, 1b etc.
+- [x] Support slide 1a, 1b etc.
 - [ ] Generate zip file with revealJS deps
 - [ ] Automatically download revealJS if not present 
 - [ ] Support revealJS animations
 - [ ] Tests
     - [x] Unit tests
-    - [ ] Integration tests
+    - [x] Integration tests
 
 
 ## Usage

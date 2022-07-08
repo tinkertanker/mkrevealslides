@@ -1,32 +1,46 @@
-use crate::conf::ArgumentError;
-use crate::val::ValError;
 use core::fmt;
 use std::error::Error;
 use std::io;
 use std::num::ParseIntError;
 
-// todo: support error kinds
+pub struct ArgumentError {
+    pub arg: String,
+    pub value: String,
+    pub reason: String,
+}
+
+impl ArgumentError {
+    pub fn new(arg: String, value: &str, reason: String) -> Self {
+        ArgumentError {
+            arg,
+            value: value.to_string(),
+            reason
+        }
+    }
+}
+
+// todo: support better error kinds
 pub struct AppError {
-    pub message: String, // todo: message is a bit misleading
+    pub error_kind: String,
     pub description: String,
 }
 
 impl fmt::Debug for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.message, self.description)
+        write!(f, "{}: {}", self.error_kind, self.description)
     }
 }
 
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {}", self.message, self.description)
+        write!(f, "{}: {}", self.error_kind, self.description)
     }
 }
 
 impl AppError {
     pub fn new(message: &str) -> AppError {
         AppError {
-            message: "App Error".to_string(),
+            error_kind: "App Error".to_string(),
             description: message.to_string(),
         }
     }
@@ -41,7 +55,7 @@ impl Error for AppError {
 impl From<io::Error> for AppError {
     fn from(err: io::Error) -> Self {
         Self {
-            message: "IO Error".to_string(),
+            error_kind: "IO Error".to_string(),
             description: err.to_string(),
         }
     }
@@ -50,7 +64,7 @@ impl From<io::Error> for AppError {
 impl From<ParseIntError> for AppError {
     fn from(err: ParseIntError) -> Self {
         Self {
-            message: "Parse Error (int)".to_string(),
+            error_kind: "Parse Error (int)".to_string(),
             description: err.to_string(),
         }
     }
@@ -59,26 +73,8 @@ impl From<ParseIntError> for AppError {
 impl From<serde_yaml::Error> for AppError {
     fn from(err: serde_yaml::Error) -> Self {
         Self {
-            message: "Parse Error (yaml)".to_string(),
+            error_kind: "Parse Error (yaml)".to_string(),
             description: err.to_string(),
-        }
-    }
-}
-
-impl From<ValError> for AppError {
-    fn from(err: ValError) -> Self {
-        Self {
-            message: "Validation Error".to_string(),
-            description: err,
-        }
-    }
-}
-
-impl From<ArgumentError> for AppError {
-    fn from(err: ArgumentError) -> Self {
-        Self {
-            message: format!("Arg error [{}]", err.0),
-            description: err.1,
         }
     }
 }
@@ -86,8 +82,17 @@ impl From<ArgumentError> for AppError {
 impl From<tera::Error> for AppError {
     fn from(err: tera::Error) -> Self {
         Self {
-            message: "Template Engine Error".to_string(),
+            error_kind: "Template Engine Error".to_string(),
             description: err.to_string(),
+        }
+    }
+}
+
+impl From<ArgumentError> for AppError {
+    fn from(err: ArgumentError) -> Self {
+        Self {
+            error_kind: format!("Arg error [{}=>{}]", err.arg, err.value),
+            description: err.reason,
         }
     }
 }
@@ -136,14 +141,14 @@ mod test {
 
     #[test]
     fn test_from_argument_error() {
-        let err = AppError::from(("arg0".to_string(), "invalid arg".to_string()));
-        assert_eq!(err.to_string(), "Arg error [arg0]: invalid arg");
-    }
-
-    #[test]
-    fn test_from_val_error() {
-        let err = AppError::from("welp".to_string());
-        assert_eq!(err.to_string(), "Validation Error: welp");
+        let err = AppError::from(
+            ArgumentError {
+                arg: "arg0".to_string(),
+                value: "test_value".to_string(),
+                reason: "test_reason".to_string(),
+            }
+        );
+        assert_eq!(err.to_string(), "Arg error [arg0=>test_value]: test_reason");
     }
 
     #[test]
