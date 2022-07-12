@@ -142,6 +142,7 @@ impl Presentation {
                     AppError::new(&format!("Could not get parent of slide at path `{}`", slide_path.display()))
                 })?;
                 let actual_img_path = fs::canonicalize(slide_dir.join(img))?;
+                // todo: this won't support img/sub/dir/img.jpg !!!!!
                 let img_dst_dir = output_dir.as_ref().join("img");
                 let img_dst_path = img_dst_dir.join(img_filename);
 
