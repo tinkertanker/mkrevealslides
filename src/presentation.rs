@@ -35,14 +35,14 @@ impl TryFrom<PresentationConfig> for Presentation {
     /// - If the template could not be read
     fn try_from(config: PresentationConfig) -> Result<Self, Self::Error> {
         trace!("Attempting to parse PresentationConfig");
-        trace!("Presentation title: {}", config.title);
+        trace!("Presentation title: {}", &config.title);
         trace!(
             "Reading template_file at `{}`",
-            config.output_file.display()
+            &config.output_file.display()
         );
         let template = fs::read_to_string(&config.template_file)?;
         trace!("Template file read: {} bytes", template.len());
-        trace!("Reading {} slides", config.include_files.len());
+        trace!("Reading {} slides", &config.include_files.len());
         let slides = {
             let mut slides = Vec::new();
             for slide_file in config.include_files {
