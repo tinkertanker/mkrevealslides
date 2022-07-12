@@ -2,7 +2,7 @@ pub mod io;
 pub mod parsing;
 
 use std::fs;
-use std::path::PathBuf;
+
 use crate::error_handling::AppError;
 use crate::slide::io::SlideFile;
 
@@ -80,7 +80,8 @@ This is a markdown slide, used for testing.
         let slide_file = tmp_dir.path().join("slide.md");
         let mut h_slide_file = File::create(&slide_file).unwrap();
         h_slide_file.write_all(slide_contents.as_bytes()).unwrap();
-        let slide = Slide::from_file(&slide_file).unwrap();
+        let s_slidefile = SlideFile::try_from(slide_file).unwrap();
+        let slide = Slide::try_from(s_slidefile).unwrap();
         assert_eq!(slide.contents, slide_contents);
     }
 

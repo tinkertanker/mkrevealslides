@@ -1,5 +1,5 @@
 use crate::error_handling::{AppError, ArgumentError};
-use crate::slide::io::{find_slides, is_markdown_file, SlideFile};
+use crate::slide::io::{find_slides, SlideFile};
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
 use std::path::PathBuf;

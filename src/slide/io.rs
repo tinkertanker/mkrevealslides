@@ -184,7 +184,6 @@ mod test {
     }
 
     #[test]
-    #[skip]
     fn test_find_included_slides() {
         let slides_dir = tempdir().unwrap();
         let slides_dir = fs::canonicalize(slides_dir.path()).unwrap();
@@ -195,7 +194,16 @@ mod test {
         File::create(&slide_file_2).unwrap();
         File::create(&slide_file_3).unwrap();
         let slides = find_slides(&slides_dir).unwrap();
-        assert_eq!(slides, vec![slide_file_1, slide_file_2, slide_file_3]);
+        assert_eq!(slides, vec![SlideFile{
+            filename: "1_slide1.md".to_string(),
+            path: slide_file_1,
+        }, SlideFile{
+            filename: "2_slide2.md".to_string(),
+            path: slide_file_2,
+        }, SlideFile{
+            filename: "3_slide3.md".to_string(),
+            path: slide_file_3,
+        }]);
     }
 
     #[test]
