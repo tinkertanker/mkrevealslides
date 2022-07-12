@@ -1,10 +1,10 @@
-use std::fs;
+
 
 use clap::Parser;
 
 use mkrevealslides::error_handling::AppError;
 
-use tracing::debug;
+
 
 use mkrevealslides::presentation::Presentation;
 use mkrevealslides::ui::cli::CliArgs;
