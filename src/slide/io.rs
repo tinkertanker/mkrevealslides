@@ -4,8 +4,8 @@ use std::fs;
 use std::io::Error;
 
 use std::path::{Path, PathBuf};
+use anyhow::Context;
 
-use crate::error_handling::AppError;
 use tracing::trace;
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
@@ -31,21 +31,14 @@ impl Ord for SlideFile {
 impl Eq for SlideFile {}
 
 impl TryFrom<PathBuf> for SlideFile {
-    type Error = AppError;
+    type Error = anyhow::Error;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         let filename = path
             .file_name()
-            .ok_or_else(|| AppError {
-                error_kind: "Invalid file name".to_string(),
-                description: "How on earth did you manage to get your file named that?"
-                    .to_string(),
-            })?
+            .with_context(|| format!("`{}` does not contain a valid filename", path.display()))?
             .to_str()
-            .ok_or_else(|| AppError {
-                error_kind: "Not UTF-8".to_string(),
-                description: format!("Filename at `{}` is not UTF-8!", path.display()),
-            })?
+            .with_context(|| format!("Filename at `{}` is not UTF-8!", path.display()))?
             .to_string();
         let sf = Self {
             filename,
@@ -67,11 +60,11 @@ impl SlideFile {
     /// # Errors
     /// - If a slide file has an invalid file name
     /// - If a slide file has a filename that is not UTF-8 compatible
-    fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, AppError> {
+    fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, anyhow::Error> {
         paths
             .into_iter()
             .map(SlideFile::try_from)
-            .collect::<Result<Vec<SlideFile>, AppError>>()
+            .collect::<Result<Vec<SlideFile>, anyhow::Error>>()
     }
 
     /// Attempts to validate the SlideFile
@@ -87,31 +80,19 @@ impl SlideFile {
     /// - If the slide file does not exist
     /// - If the slide file is not a file
     /// - If the slide file is not a markdown file
-    pub fn validate(&self) -> Result<(), AppError> {
+    pub fn validate(&self) -> Result<(), anyhow::Error> {
         // todo: return ValidationError
         if !self.path.is_absolute() {
-            return Err(AppError {
-                error_kind: "Not absolute".to_string(),
-                description: format!("Path `{}` is not absolute!", self.path.display()),
-            });
+            return Err(anyhow::Error::msg(format!("Path `{}` is not absolute!", self.path.display())));
         }
         if !self.path.exists() {
-            return Err(AppError {
-                error_kind: "File does not exist".to_string(),
-                description: format!("File at `{}` does not exist!", self.path.display()),
-            });
+            return Err(anyhow::Error::msg(format!("File at `{}` does not exist!", self.path.display())));
         }
         if !self.path.is_file() {
-            return Err(AppError {
-                error_kind: "Not a file".to_string(),
-                description: format!("File at `{}` is not a file!", self.path.display()),
-            });
+            return Err(anyhow::Error::msg(format!("File at `{}` is not a file!", self.path.display())));
         }
         if !is_markdown_file(&self.path) {
-            return Err(AppError {
-                error_kind: "Not a markdown file".to_string(),
-                description: format!("File at `{}` is not a markdown file!", self.path.display()),
-            });
+            return Err(anyhow::Error::msg(format!("File at `{}` is not a markdown file!", self.path.display())));
         }
         Ok(())
     }
@@ -132,7 +113,7 @@ pub fn is_markdown_file(fp: &Path) -> bool {
 ///
 /// # Errors
 /// Returns an error if the slide directory could not be read
-pub fn find_slides(slide_dir: &PathBuf) -> Result<Vec<SlideFile>, AppError> {
+pub fn find_slides(slide_dir: &PathBuf) -> Result<Vec<SlideFile>, anyhow::Error> {
     trace!("Finding slides in {}", slide_dir.display());
     let files = list_directory(slide_dir, true)?;
     let mut slide_files = SlideFile::from_paths(files)?;

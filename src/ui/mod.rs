@@ -1,10 +1,11 @@
-use crate::error_handling::{AppError, ArgumentError};
 use crate::slide::io::{find_slides, SlideFile};
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
 use std::path::PathBuf;
 use std::{env, fs};
+use anyhow::Error;
 use tracing::{trace, warn};
+use crate::errors::ArgumentError;
 
 pub mod cli;
 pub mod conf;
@@ -30,11 +31,11 @@ impl PresentationConfig {
     /// In particular, it checks that any paths
     /// specified are valid, and those that need to be
     /// accessed can be accessed.
-    fn validate(&self) -> Result<(), AppError> {
+    fn validate(&self) -> Result<(), Error> {
         trace!("Validating PresentationConfig");
         trace!("Checking output_file");
         if !self.output_file.is_absolute() {
-            return Err(AppError::from(ArgumentError::new(
+            return Err(anyhow::Error::from(ArgumentError::new(
                 "output_file".to_string(),
                 self.output_file.to_str().unwrap_or("<invalid path>"),
                 "Output file must be an absolute path".to_string(),
@@ -43,7 +44,7 @@ impl PresentationConfig {
 
         // does it exist and is it a directory? if so, reject it
         if self.output_file.is_dir() {
-            return Err(AppError::from(ArgumentError::new(
+            return Err(Error::from(ArgumentError::new(
                 "output_file".to_string(),
                 self.output_file.to_str().unwrap_or("<invalid path>"),
                 "Output file cannot be a directory".to_string(),
@@ -63,7 +64,7 @@ impl PresentationConfig {
                 if output_dir.is_dir() {
                     // it exists, so we can continue
                 } else {
-                    return Err(AppError::from(ArgumentError::new(
+                    return Err(Error::from(ArgumentError::new(
                         "output_file".to_string(),
                         self.output_file.to_str().unwrap_or("<invalid path>"),
                         "Output file's parent directory does not exist".to_string(),
@@ -73,7 +74,7 @@ impl PresentationConfig {
                 // the parent directory is root (e.g. / or C:\), or is something that doesn't really make sense
                 // e.g. /a/b/c/.. (the parent of this is actually /a/b)
                 // todo: prefixes should be handled
-                return Err(AppError::from(ArgumentError::new(
+                return Err(Error::from(ArgumentError::new(
                     "output_file".to_string(),
                     self.output_file.to_str().unwrap_or("<invalid path>"),
                     "The directory that will contain this output file is invalid".to_string(),
@@ -82,7 +83,7 @@ impl PresentationConfig {
         }
         trace!("Checking template_file");
         if !self.template_file.is_absolute() {
-            return Err(AppError::from(ArgumentError::new(
+            return Err(Error::from(ArgumentError::new(
                 "template_file".to_string(),
                 self.template_file.to_str().unwrap_or("<invalid path>"),
                 "Template file must be an absolute path".to_string(),
@@ -90,7 +91,7 @@ impl PresentationConfig {
         }
 
         if !self.template_file.is_file() {
-            return Err(AppError::from(ArgumentError::new(
+            return Err(Error::from(ArgumentError::new(
                 "template_file".to_string(),
                 self.template_file.to_str().unwrap_or("<invalid path>"),
                 "Template file does not exist or cannot be read".to_string(),
@@ -109,7 +110,7 @@ impl PresentationConfig {
 /// All paths will be converted to absolute paths with respect to the current working directory.
 /// (i.e. the directory the command was executed in)
 impl TryFrom<CliArgs> for PresentationConfig {
-    type Error = AppError;
+    type Error = anyhow::Error;
 
     fn try_from(args: CliArgs) -> Result<Self, Self::Error> {
         match args.command {
@@ -148,7 +149,7 @@ impl TryFrom<CliArgs> for PresentationConfig {
 /// Attempts to convert a PresentationConfigFile to PresentationConfig
 /// Validates and converts relative paths to absolute paths in the process
 impl TryFrom<PresentationConfigFile> for PresentationConfig {
-    type Error = AppError;
+    type Error = anyhow::Error;
 
     fn try_from(config: PresentationConfigFile) -> Result<Self, Self::Error> {
         trace!("Attempting to convert PresentationConfigFile to PresentationConfig");
@@ -167,7 +168,7 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
         } else {
             let mut sf = include_files_abs_paths.iter().map(|fp| {
                 SlideFile::try_from(fp.clone())
-            }).collect::<Result<Vec<SlideFile>, AppError>>()?;
+            }).collect::<Result<Vec<SlideFile>, anyhow::Error>>()?;
             sf.sort();
             sf
         };

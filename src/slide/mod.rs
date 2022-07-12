@@ -4,7 +4,6 @@ pub mod parsing;
 use std::fs;
 use std::path::PathBuf;
 
-use crate::error_handling::AppError;
 use crate::slide::io::SlideFile;
 
 use crate::slide::parsing::{get_local_links, grab_image_links};
@@ -30,7 +29,7 @@ pub struct Slide {
 }
 
 impl TryFrom<SlideFile> for Slide {
-    type Error = AppError;
+    type Error = anyhow::Error;
 
     /// This consumes the SlideFile
     fn try_from(slide_file: SlideFile) -> Result<Self, Self::Error> {

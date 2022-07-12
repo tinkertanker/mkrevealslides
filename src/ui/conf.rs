@@ -1,7 +1,7 @@
-use crate::error_handling::AppError;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+use anyhow::Context;
 use tracing::trace;
 
 /// A PresentationConfigFile which has been deserialized
@@ -35,7 +35,7 @@ impl PresentationConfigFile {
     /// # Errors
     /// - If the file is not valid YAML
     /// - If the parent directory of the file cannot be accessed
-    pub fn read_config_file(config_file_path: PathBuf) -> Result<Self, AppError> {
+    pub fn read_config_file(config_file_path: PathBuf) -> Result<Self, anyhow::Error> {
         trace!(
             "Attempting to read config file: {}",
             config_file_path.display()
@@ -44,7 +44,7 @@ impl PresentationConfigFile {
         trace!("Config file read: {} bytes", config_str.len());
         let config_parent_dir = &config_file_path
             .parent()
-            .ok_or_else(|| AppError::new("Could not find parent directory of config file"))?;
+            .with_context(|| "Could not find parent directory of config file")?;
 
         let mut config: Self = serde_yaml::from_str(&config_str)?;
 

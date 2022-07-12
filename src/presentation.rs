@@ -1,9 +1,9 @@
-use crate::error_handling::AppError;
 use crate::slide::Slide;
 use crate::ui::PresentationConfig;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tera::{Context, Tera};
+use anyhow::Context;
+use tera::{Tera};
 use tracing::{debug, trace, warn};
 
 #[derive(Debug)]
@@ -19,7 +19,7 @@ pub struct Presentation {
 /// Attempts to parse the PresentationConfig and read all the necessary details in
 /// producing a presentation
 impl TryFrom<PresentationConfig> for Presentation {
-    type Error = AppError;
+    type Error = anyhow::Error;
 
     /// Attempts to parse the PresentationConfig and read all the necessary details in
     /// producing a presentation
@@ -70,7 +70,7 @@ impl Presentation {
     /// # Errors
     /// If the template engine fails to render the presentation.
     pub fn render(&self) -> Result<String, tera::Error> {
-        let mut ctx = Context::new();
+        let mut ctx = tera::Context::new();
 
         let slide_contents = self
             .slides
@@ -92,7 +92,7 @@ impl Presentation {
     /// * `output_dir`: The directory to place all the presentation output files into
     ///
     /// Optionally, downloads revealJS libs and generates the zip too
-    pub fn package<P: AsRef<Path>>(&mut self, output_dir: P) -> Result<(), AppError> {
+    pub fn package<P: AsRef<Path>>(&mut self, output_dir: P) -> Result<(), anyhow::Error> {
         // todo: refactor logic here, too messy
         let output = self.render()?;
         debug!("Rendered {} bytes", output.len());
@@ -109,7 +109,7 @@ impl Presentation {
                 continue;
             }
             slide.parse();
-            let slide_path = &slide.slide_path.as_ref().unwrap();
+            let slide_path = slide.slide_path.as_ref().unwrap();
 
             trace!("Slide is at {}", slide_path.display());
 
@@ -121,29 +121,27 @@ impl Presentation {
             }
 
             for img in local_images {
-
                 let im_path = PathBuf::from(img);
-                let img_filename = im_path.file_name().ok_or_else(|| {
-                    AppError::new(
-                        "Could not get filename from path",
-                    )
-                })?.to_str().ok_or_else(|| {
-                    AppError::new(
-                        "Image path is not valid UTF-8",
-                    )
-                })?;
+                let img_filename = im_path
+                    .file_name()
+                    .with_context(|| format!("Could not obtain file name of {}", im_path.display()))?
+                    .to_str()
+                    .with_context(|| format!("{} is not valid UTF-8", im_path.display()))?;
+
                 debug!("Image filename is {}", img_filename);
                 if !img.starts_with("../img") {
-                    // todo: won't support windows
+                    // todo: this might not work on windows
                     warn!("This local image is not in the img/ directory (it's in `{}`) and will be skipped.", img);
                     continue;
                 }
-                let slide_dir = &slide_path.parent().ok_or_else(|| {
-                    AppError::new(&format!("Could not get parent of slide at path `{}`", slide_path.display()))
-                })?;
+                let mut img_containing_dir = im_path.strip_prefix("..")?.to_path_buf();
+                img_containing_dir.pop();
+
+                let slide_dir = &slide_path
+                    .parent()
+                    .with_context(|| { format!("Could not get parent of slide at path `{}`", slide_path.display()) })?;
                 let actual_img_path = fs::canonicalize(slide_dir.join(img))?;
-                // todo: this won't support img/sub/dir/img.jpg !!!!!
-                let img_dst_dir = output_dir.as_ref().join("img");
+                let img_dst_dir = output_dir.as_ref().join(img_containing_dir);
                 let img_dst_path = img_dst_dir.join(img_filename);
 
                 trace!("Attempting to create {}", img_dst_dir.display());
