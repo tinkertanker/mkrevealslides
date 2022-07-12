@@ -2,6 +2,7 @@ pub mod io;
 pub mod parsing;
 
 use std::fs;
+use std::path::PathBuf;
 
 use crate::error_handling::AppError;
 use crate::slide::io::SlideFile;
@@ -20,6 +21,9 @@ use crate::slide::parsing::{get_local_links, grab_image_links};
 #[derive(Debug)]
 pub struct Slide {
     pub contents: String,
+    /// Path to the slide file.
+    /// May be `None` if the slide was not read from a file.
+    pub slide_path: Option<PathBuf>,
     /// `None` means that `contents` has not been parsed yet
     /// If this is `Some`, the local_images may still be empty if there are no local images
     pub local_images: Option<Vec<String>>,
@@ -28,9 +32,14 @@ pub struct Slide {
 impl TryFrom<SlideFile> for Slide {
     type Error = AppError;
 
+    /// This consumes the SlideFile
     fn try_from(slide_file: SlideFile) -> Result<Self, Self::Error> {
-        let contents = fs::read_to_string(slide_file.path)?;
-        Ok(Self::new(contents))
+        let contents = fs::read_to_string(&slide_file.path)?;
+        Ok(Self {
+            contents,
+            slide_path: Some(slide_file.path),
+            local_images: None,
+        })
     }
 }
 
@@ -40,6 +49,7 @@ impl Slide {
     pub fn new(contents: String) -> Self {
         Self {
             contents,
+            slide_path: None,
             local_images: None,
         }
     }

@@ -2,8 +2,9 @@ use crate::error_handling::AppError;
 use crate::slide::Slide;
 use crate::ui::PresentationConfig;
 use std::fs;
+use std::path::{Path, PathBuf};
 use tera::{Context, Tera};
-use tracing::trace;
+use tracing::{debug, trace, warn};
 
 #[derive(Debug)]
 pub struct Presentation {
@@ -84,24 +85,72 @@ impl Presentation {
         result
     }
 
-    /// Packages the presentation to a file
+    /// Packages the presentation to a file.
+    /// This will copy all local images referenced in slides into the output directory
     ///
-    /// Optionally, copies any local images to the destination directory
+    /// # Arguments
+    /// * `output_dir`: The directory to place all the presentation output files into
+    ///
     /// Optionally, downloads revealJS libs and generates the zip too
-    pub fn package(&mut self) -> Result<(), AppError> {
+    pub fn package<P: AsRef<Path>>(&mut self, output_dir: P) -> Result<(), AppError> {
+        // todo: refactor logic here, too messy
+        let output = self.render()?;
+        debug!("Rendered {} bytes", output.len());
+        // todo: read the config!
+        let output_path = output_dir.as_ref().join("index.html");
+        debug!("Writing to `{}`", output_path.display());
+        fs::write(&output_path, output)?;
+        println!("Slides written to `{}`", output_path.display());
+
         for slide in &mut self.slides {
+            if slide.slide_path.is_none() {
+                // todo: support images with absolute paths
+                warn!("Skipping a slide which has no path");
+                continue;
+            }
             slide.parse();
+            let slide_path = &slide.slide_path.as_ref().unwrap();
+
+            trace!("Slide is at {}", slide_path.display());
+
             // safe to unwrap because we just parsed the slide
             let local_images = slide.local_images.as_ref().unwrap();
+            trace!("Slide has {} local images", local_images.len());
             if local_images.is_empty() {
                 continue;
             }
+
             for img in local_images {
-                println!("Copying {}", img);
-                // fs::copy(src, dst)?;
+
+                let im_path = PathBuf::from(img);
+                let img_filename = im_path.file_name().ok_or_else(|| {
+                    AppError::new(
+                        "Could not get filename from path",
+                    )
+                })?.to_str().ok_or_else(|| {
+                    AppError::new(
+                        "Image path is not valid UTF-8",
+                    )
+                })?;
+                debug!("Image filename is {}", img_filename);
+                if !img.starts_with("../img") {
+                    // todo: won't support windows
+                    warn!("This local image is not in the img/ directory (it's in `{}`) and will be skipped.", img);
+                    continue;
+                }
+                let slide_dir = &slide_path.parent().ok_or_else(|| {
+                    AppError::new(&format!("Could not get parent of slide at path `{}`", slide_path.display()))
+                })?;
+                let actual_img_path = fs::canonicalize(slide_dir.join(img))?;
+                let img_dst_dir = output_dir.as_ref().join("img");
+                let img_dst_path = img_dst_dir.join(img_filename);
+
+                trace!("Attempting to create {}", img_dst_dir.display());
+                fs::create_dir_all(&img_dst_dir)?;
+                println!("Copying `{}` into `{}`", actual_img_path.display(), img_dst_path.display());
+                fs::copy(actual_img_path, img_dst_path)?;
             }
         }
-        println!("{:?}", self.slides);
         Ok(())
     }
 }
