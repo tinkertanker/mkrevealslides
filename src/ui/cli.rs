@@ -40,7 +40,7 @@ pub enum Commands {
         template_file: PathBuf,
 
         /// Output directory to place generated slides in
-        #[clap(parse(from_os_str))]
+        #[clap(parse(from_os_str), default_value = "output")]
         output_dir: PathBuf,
 
         /// Output filename to use
