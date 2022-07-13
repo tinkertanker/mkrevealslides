@@ -30,3 +30,31 @@ impl Error for ArgumentError {
         &self.reason
     }
 }
+
+#[derive(Debug)]
+pub struct ValidationError {
+    pub value: String,
+    pub reason: String,
+}
+
+impl ValidationError {
+    pub fn new(value: &str, reason: String) -> Self {
+        ValidationError {
+            value: value.to_string(),
+            reason,
+        }
+    }
+}
+
+impl Display for ValidationError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f,
+            "ValidationError [{val}]: {reason}", val=self.value, reason=self.reason)
+    }
+}
+
+impl Error for ValidationError {
+    fn description(&self) -> &str {
+        &self.reason
+    }
+}

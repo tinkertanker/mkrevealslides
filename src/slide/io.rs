@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 
 use tracing::trace;
+use crate::errors::ValidationError;
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
 #[derive(PartialEq, Debug, Clone)]
@@ -80,19 +81,22 @@ impl SlideFile {
     /// - If the slide file does not exist
     /// - If the slide file is not a file
     /// - If the slide file is not a markdown file
-    pub fn validate(&self) -> Result<(), anyhow::Error> {
-        // todo: return ValidationError
+    pub fn validate(&self) -> Result<(), ValidationError> {
         if !self.path.is_absolute() {
-            return Err(anyhow::Error::msg(format!("Path `{}` is not absolute!", self.path.display())));
+            return Err(ValidationError::new(&self.path.display().to_string(),
+                                            "Path is not absolute".to_string()));
         }
         if !self.path.exists() {
-            return Err(anyhow::Error::msg(format!("File at `{}` does not exist!", self.path.display())));
+            return Err(ValidationError::new(&self.path.display().to_string(),
+                                            "File does not exist".to_string()));
         }
         if !self.path.is_file() {
-            return Err(anyhow::Error::msg(format!("File at `{}` is not a file!", self.path.display())));
+            return Err(ValidationError::new(&self.path.display().to_string(),
+                                            "Path is not a file".to_string()));
         }
         if !is_markdown_file(&self.path) {
-            return Err(anyhow::Error::msg(format!("File at `{}` is not a markdown file!", self.path.display())));
+            return Err(ValidationError::new(&self.path.display().to_string(),
+                                            "File is not a markdown file".to_string()));
         }
         Ok(())
     }
