@@ -171,11 +171,10 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
             // let's try to search for slides
             find_slides(&config.working_directory.join(config.slide_dir))?
         } else {
-            let mut sf = include_files_abs_paths
+            let sf = include_files_abs_paths
                 .iter()
                 .map(|fp| SlideFile::try_from(fp.clone()))
                 .collect::<Result<Vec<SlideFile>, anyhow::Error>>()?;
-            sf.sort();
             sf
         };
 
