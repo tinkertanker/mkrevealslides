@@ -22,10 +22,11 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
   publish:
-
     needs: build
 
     name: Publish to crates.io
+
+    if: startsWith(github.event.ref, 'refs/tags/v')
 
     runs-on: ubuntu-latest
 
