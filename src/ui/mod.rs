@@ -156,7 +156,10 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
         let include_files_abs_paths = config
             .include_files
             .iter()
-            .map(|relative_pth| config.working_directory.join(relative_pth))
+            .map(|relative_pth|
+                config.working_directory
+                    .join(&config.slide_dir)
+                    .join(relative_pth))
             .collect::<Vec<PathBuf>>();
         trace!(
             "Converted {} include_file paths to abs paths",
