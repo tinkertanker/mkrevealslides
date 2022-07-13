@@ -1,9 +1,9 @@
 use crate::slide::Slide;
 use crate::ui::PresentationConfig;
+use anyhow::Context;
 use std::fs;
 use std::path::{Path, PathBuf};
-use anyhow::Context;
-use tera::{Tera};
+use tera::Tera;
 use tracing::{debug, trace, warn};
 
 #[derive(Debug)]
@@ -124,7 +124,9 @@ impl Presentation {
                 let im_path = PathBuf::from(img);
                 let img_filename = im_path
                     .file_name()
-                    .with_context(|| format!("Could not obtain file name of {}", im_path.display()))?
+                    .with_context(|| {
+                        format!("Could not obtain file name of {}", im_path.display())
+                    })?
                     .to_str()
                     .with_context(|| format!("{} is not valid UTF-8", im_path.display()))?;
 
@@ -137,16 +139,23 @@ impl Presentation {
                 let mut img_containing_dir = im_path.strip_prefix("..")?.to_path_buf();
                 img_containing_dir.pop();
 
-                let slide_dir = &slide_path
-                    .parent()
-                    .with_context(|| { format!("Could not get parent of slide at path `{}`", slide_path.display()) })?;
+                let slide_dir = &slide_path.parent().with_context(|| {
+                    format!(
+                        "Could not get parent of slide at path `{}`",
+                        slide_path.display()
+                    )
+                })?;
                 let actual_img_path = fs::canonicalize(slide_dir.join(img))?;
                 let img_dst_dir = output_dir.as_ref().join(img_containing_dir);
                 let img_dst_path = img_dst_dir.join(img_filename);
 
                 trace!("Attempting to create {}", img_dst_dir.display());
                 fs::create_dir_all(&img_dst_dir)?;
-                println!("Copying `{}` into `{}`", actual_img_path.display(), img_dst_path.display());
+                println!(
+                    "Copying `{}` into `{}`",
+                    actual_img_path.display(),
+                    img_dst_path.display()
+                );
                 fs::copy(actual_img_path, img_dst_path)?;
             }
         }

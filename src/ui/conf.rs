@@ -1,7 +1,7 @@
+use anyhow::Context;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
-use anyhow::Context;
 use tracing::trace;
 
 /// A PresentationConfigFile which has been deserialized

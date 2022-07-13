@@ -124,13 +124,19 @@ fn test_presentation_from_config_with_image_in_subdirectory() {
 
     let slide_file_1 = slide_dir.join("1_slide1.md");
     let mut h_slide_file_1 = File::create(&slide_file_1).unwrap();
-    h_slide_file_1.write_all(b"![](../img/slide1/img1.png)").unwrap();
+    h_slide_file_1
+        .write_all(b"![](../img/slide1/img1.png)")
+        .unwrap();
     let slide_file_2 = slide_dir.join("2_slide2.md");
     let mut h_slide_file_2 = File::create(&slide_file_2).unwrap();
-    h_slide_file_2.write_all(b"![](../img/slide2/a/img2.png)").unwrap();
+    h_slide_file_2
+        .write_all(b"![](../img/slide2/a/img2.png)")
+        .unwrap();
     let slide_file_3 = slide_dir.join("3_slide3.md");
     let mut h_slide_file_3 = File::create(&slide_file_3).unwrap();
-    h_slide_file_3.write_all(b"![](../img/slide3/img3.png)").unwrap();
+    h_slide_file_3
+        .write_all(b"![](../img/slide3/img3.png)")
+        .unwrap();
 
     let img_dir = tmp_dir.path().join("img");
     fs::create_dir(&img_dir).unwrap();

@@ -3,11 +3,11 @@ use std::fs;
 
 use std::io::Error;
 
-use std::path::{Path, PathBuf};
 use anyhow::Context;
+use std::path::{Path, PathBuf};
 
-use tracing::trace;
 use crate::errors::ValidationError;
+use tracing::trace;
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
 #[derive(PartialEq, Debug, Clone)]
@@ -41,10 +41,7 @@ impl TryFrom<PathBuf> for SlideFile {
             .to_str()
             .with_context(|| format!("Filename at `{}` is not UTF-8!", path.display()))?
             .to_string();
-        let sf = Self {
-            filename,
-            path,
-        };
+        let sf = Self { filename, path };
         sf.validate()?;
         Ok(sf)
     }
@@ -83,20 +80,28 @@ impl SlideFile {
     /// - If the slide file is not a markdown file
     pub fn validate(&self) -> Result<(), ValidationError> {
         if !self.path.is_absolute() {
-            return Err(ValidationError::new(&self.path.display().to_string(),
-                                            "Path is not absolute".to_string()));
+            return Err(ValidationError::new(
+                &self.path.display().to_string(),
+                "Path is not absolute".to_string(),
+            ));
         }
         if !self.path.exists() {
-            return Err(ValidationError::new(&self.path.display().to_string(),
-                                            "File does not exist".to_string()));
+            return Err(ValidationError::new(
+                &self.path.display().to_string(),
+                "File does not exist".to_string(),
+            ));
         }
         if !self.path.is_file() {
-            return Err(ValidationError::new(&self.path.display().to_string(),
-                                            "Path is not a file".to_string()));
+            return Err(ValidationError::new(
+                &self.path.display().to_string(),
+                "Path is not a file".to_string(),
+            ));
         }
         if !is_markdown_file(&self.path) {
-            return Err(ValidationError::new(&self.path.display().to_string(),
-                                            "File is not a markdown file".to_string()));
+            return Err(ValidationError::new(
+                &self.path.display().to_string(),
+                "File is not a markdown file".to_string(),
+            ));
         }
         Ok(())
     }
@@ -179,16 +184,23 @@ mod test {
         File::create(&slide_file_2).unwrap();
         File::create(&slide_file_3).unwrap();
         let slides = find_slides(&slides_dir).unwrap();
-        assert_eq!(slides, vec![SlideFile{
-            filename: "1_slide1.md".to_string(),
-            path: slide_file_1,
-        }, SlideFile{
-            filename: "2_slide2.md".to_string(),
-            path: slide_file_2,
-        }, SlideFile{
-            filename: "3_slide3.md".to_string(),
-            path: slide_file_3,
-        }]);
+        assert_eq!(
+            slides,
+            vec![
+                SlideFile {
+                    filename: "1_slide1.md".to_string(),
+                    path: slide_file_1,
+                },
+                SlideFile {
+                    filename: "2_slide2.md".to_string(),
+                    path: slide_file_2,
+                },
+                SlideFile {
+                    filename: "3_slide3.md".to_string(),
+                    path: slide_file_3,
+                }
+            ]
+        );
     }
 
     #[test]

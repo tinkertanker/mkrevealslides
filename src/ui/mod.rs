@@ -1,11 +1,11 @@
+use crate::errors::ArgumentError;
 use crate::slide::io::{find_slides, SlideFile};
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
+use anyhow::Error;
 use std::path::PathBuf;
 use std::{env, fs};
-use anyhow::Error;
 use tracing::{trace, warn};
-use crate::errors::ArgumentError;
 
 pub mod cli;
 pub mod conf;
@@ -156,10 +156,12 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
         let include_files_abs_paths = config
             .include_files
             .iter()
-            .map(|relative_pth|
-                config.working_directory
+            .map(|relative_pth| {
+                config
+                    .working_directory
                     .join(&config.slide_dir)
-                    .join(relative_pth))
+                    .join(relative_pth)
+            })
             .collect::<Vec<PathBuf>>();
         trace!(
             "Converted {} include_file paths to abs paths",
@@ -169,9 +171,10 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
             // let's try to search for slides
             find_slides(&config.working_directory.join(config.slide_dir))?
         } else {
-            let mut sf = include_files_abs_paths.iter().map(|fp| {
-                SlideFile::try_from(fp.clone())
-            }).collect::<Result<Vec<SlideFile>, anyhow::Error>>()?;
+            let mut sf = include_files_abs_paths
+                .iter()
+                .map(|fp| SlideFile::try_from(fp.clone()))
+                .collect::<Result<Vec<SlideFile>, anyhow::Error>>()?;
             sf.sort();
             sf
         };

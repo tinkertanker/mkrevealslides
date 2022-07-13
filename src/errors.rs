@@ -20,8 +20,13 @@ impl ArgumentError {
 
 impl Display for ArgumentError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
-            "ArgError [{arg}=>{val}]: {reason}", arg=self.arg, val=self.value, reason=self.reason)
+        write!(
+            f,
+            "ArgError [{arg}=>{val}]: {reason}",
+            arg = self.arg,
+            val = self.value,
+            reason = self.reason
+        )
     }
 }
 
@@ -48,8 +53,12 @@ impl ValidationError {
 
 impl Display for ValidationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
-            "ValidationError [{val}]: {reason}", val=self.value, reason=self.reason)
+        write!(
+            f,
+            "ValidationError [{val}]: {reason}",
+            val = self.value,
+            reason = self.reason
+        )
     }
 }
 
