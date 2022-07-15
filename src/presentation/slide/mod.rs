@@ -165,7 +165,7 @@ mod test {
 
         let local_img = abs_path_to_tmp_dir.join("local/image.png");
         fs::create_dir_all(local_img.parent().unwrap()).unwrap();
-        let h_local_img = File::create(&local_img).unwrap();
+        let _h_local_img = File::create(&local_img).unwrap();
 
         let slide_file = SlideFile::read_and_parse(slide_file).unwrap();
         assert_eq!(slide_file.contents, slide_contents);

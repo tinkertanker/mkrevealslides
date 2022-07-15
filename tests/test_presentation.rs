@@ -1,12 +1,11 @@
-use mkrevealslides::presentation::Presentation;
 use mkrevealslides::ui::conf::PresentationConfigFile;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-use mkrevealslides::ui::PresentationConfig;
 use tempfile::tempdir;
+use mkrevealslides::presentation::PresentationConfig;
 
 #[test]
 fn test_presentation_from_config() {
@@ -46,7 +45,6 @@ template_file: "template.html"
 
     let cfg_file_obj = PresentationConfigFile::read_config_file(cfg_file).unwrap();
     let cfg = PresentationConfig::try_from(cfg_file_obj).unwrap();
-    let ppt = Presentation::try_from(cfg).unwrap();
     assert_eq!(ppt.title, "Test Presentation");
     assert_eq!(ppt.template, template_contents);
     assert_eq!(ppt.slides.len(), 3);
