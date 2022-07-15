@@ -1,4 +1,3 @@
-pub mod io;
 pub mod parsing;
 
 use crate::errors::ValidationError;
@@ -7,7 +6,7 @@ use std::cmp::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::presentation::slide::io::is_markdown_file;
+use crate::presentation::io::is_markdown_file;
 use crate::presentation::slide::parsing::{get_local_links, grab_image_links};
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
@@ -98,7 +97,7 @@ impl SlideFile {
     /// # Errors
     /// - If a slide file has an invalid file name
     /// - If a slide file has a filename that is not UTF-8 compatible
-    fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, anyhow::Error> {
+    pub fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, anyhow::Error> {
         paths
             .into_iter()
             .map(SlideFile::read_and_parse)

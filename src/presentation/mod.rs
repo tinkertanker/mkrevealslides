@@ -1,16 +1,19 @@
 use crate::errors::ArgumentError;
-use crate::presentation::slide::io::find_slides;
+use io::find_slides;
 use crate::presentation::slide::SlideFile;
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
 
 
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::{env, fs};
 use tera::Tera;
 use tracing::{debug, trace, warn};
 
+/// Utilities to work with Slides
 pub mod slide;
+/// Functions that work with the disk
+pub mod io;
 
 /// The logical representation of a presentation configuration
 #[derive(Debug, Clone)]
@@ -25,6 +28,8 @@ pub struct PresentationConfig {
     pub output_filename: PathBuf,
     /// Absolute path to the template file
     pub template_file: PathBuf,
+    /// Slides to be included in the presentation
+    /// in the order that they appear in
     pub slides: Vec<SlideFile>,
 }
 
