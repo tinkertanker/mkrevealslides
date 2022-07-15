@@ -1,10 +1,12 @@
-use crate::slide::Slide;
+use slide::Slide;
 use crate::ui::PresentationConfig;
 use anyhow::Context;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tera::Tera;
 use tracing::{debug, trace, warn};
+
+pub mod slide;
 
 #[derive(Debug)]
 pub struct Presentation {

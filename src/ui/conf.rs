@@ -77,6 +77,6 @@ template_file: "template.html"
         assert_eq!(cfg.slide_dir, PathBuf::from("slides"));
         assert_eq!(cfg.output_file, PathBuf::from("output.html"));
         assert_eq!(cfg.template_file, PathBuf::from("template.html"));
-        assert_eq!(cfg.working_directory, tmp_dir.path());
+        assert_eq!(cfg.working_directory, fs::canonicalize(tmp_dir.path()).unwrap());
     }
 }

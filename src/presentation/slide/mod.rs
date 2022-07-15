@@ -4,9 +4,9 @@ pub mod parsing;
 use std::fs;
 use std::path::PathBuf;
 
-use crate::slide::io::SlideFile;
+use crate::presentation::slide::io::SlideFile;
 
-use crate::slide::parsing::{get_local_links, grab_image_links};
+use crate::presentation::slide::parsing::{get_local_links, grab_image_links};
 
 /// A single slide that can be used in a presentation.
 /// A slide has contents (which is in markdown)

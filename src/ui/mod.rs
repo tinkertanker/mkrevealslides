@@ -1,5 +1,5 @@
 use crate::errors::ArgumentError;
-use crate::slide::io::{find_slides, SlideFile};
+use crate::presentation::slide::io::{find_slides, SlideFile};
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
 use anyhow::Error;
