@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use pulldown_cmark::{Event, LinkType, Options, Parser, Tag};
 
 /// Parses some markdown contents and only pulls out image links.
@@ -6,7 +7,7 @@ use pulldown_cmark::{Event, LinkType, Options, Parser, Tag};
 /// * `contents` - The markdown contents to parse.
 ///
 /// # Example
-/// ```rust
+/// ```no_run
 /// use mkrevealslides::presentation::slide::parsing::grab_image_links;
 /// let markdown = "![alt text](https://example.com/image.png)\n![img2](https://example.com/image2.png)";
 /// let links = grab_image_links(markdown);
@@ -15,7 +16,7 @@ use pulldown_cmark::{Event, LinkType, Options, Parser, Tag};
 ///
 /// # Returns
 /// A vector of image links. It may be empty, if there are no links
-pub fn grab_image_links(md_contents: &str) -> Vec<String> {
+pub(crate) fn grab_image_links(md_contents: &str) -> Vec<String> {
     let mut results: Vec<String> = vec![];
     let parser = Parser::new_ext(md_contents, Options::all());
     for event in parser {
@@ -33,22 +34,26 @@ pub fn grab_image_links(md_contents: &str) -> Vec<String> {
 /// # Arguments
 /// * `links` - A vector of links.
 ///
+/// # Notes
+/// The local links extracted may be relative paths.
+///
 /// # Example
-/// ```rust
+/// ```no_run
+/// use std::path::PathBuf;
 /// use mkrevealslides::presentation::slide::parsing::get_local_links;
 /// let links = vec!["https://example.com/image.png".to_string(), "https://example.com/image2.png".to_string(), "/path/to/image.png".to_string()];
 ///
-/// let local_links = get_local_links(links);
-/// assert_eq!(local_links, vec!["/path/to/image.png".to_string()]);
+/// let local_links = get_local_links(&links);
+/// assert_eq!(local_links, vec![PathBuf::from("/path/to/image.png")]);
 /// ```
 ///
 /// # Returns
 /// A vector of local links. It may be empty, if there are no links.
-pub fn get_local_links(links: Vec<String>) -> Vec<String> {
-    let mut results: Vec<String> = vec![];
+pub(crate) fn get_local_links(links: &[String]) -> Vec<PathBuf> {
+    let mut results = vec![];
     for link in links {
         if !link.contains("://") {
-            results.push(link.clone());
+            results.push(PathBuf::from(link));
         }
     }
     results
@@ -100,7 +105,7 @@ bar
             "ftp://ftp.google.com/image.png".to_string(),
             "ftps://ftp.google.com/image.png".to_string(),
         ];
-        let results = get_local_links(links);
+        let results = get_local_links(&links);
         assert_eq!(results.len(), 7);
     }
 }

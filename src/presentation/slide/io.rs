@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::fs;
 
 use std::io::Error;
@@ -8,104 +7,8 @@ use std::path::{Path, PathBuf};
 
 use crate::errors::ValidationError;
 use tracing::trace;
+use crate::presentation::slide::SlideFile;
 
-/// A SlideFile is a slide that exists as a file on the disk somewhere
-#[derive(PartialEq, Debug, Clone)]
-pub struct SlideFile {
-    filename: String,
-    /// Absolute path to where this slideFile is located
-    pub path: PathBuf,
-}
-
-impl PartialOrd for SlideFile {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.filename.partial_cmp(&other.filename)
-    }
-}
-
-impl Ord for SlideFile {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.filename.cmp(&other.filename)
-    }
-}
-
-impl Eq for SlideFile {}
-
-impl TryFrom<PathBuf> for SlideFile {
-    type Error = anyhow::Error;
-
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-        let filename = path
-            .file_name()
-            .with_context(|| format!("`{}` does not contain a valid filename", path.display()))?
-            .to_str()
-            .with_context(|| format!("Filename at `{}` is not UTF-8!", path.display()))?
-            .to_string();
-        let sf = Self { filename, path };
-        sf.validate()?;
-        Ok(sf)
-    }
-}
-
-impl SlideFile {
-    /// Creates a list of SlideFiles from paths
-    /// # Arguments
-    /// * `paths` - A list of paths to slide files.
-    ///
-    /// # Returns
-    /// A list of SlideFiles.
-    ///
-    /// # Errors
-    /// - If a slide file has an invalid file name
-    /// - If a slide file has a filename that is not UTF-8 compatible
-    fn from_paths(paths: Vec<PathBuf>) -> Result<Vec<Self>, anyhow::Error> {
-        paths
-            .into_iter()
-            .map(SlideFile::try_from)
-            .collect::<Result<Vec<SlideFile>, anyhow::Error>>()
-    }
-
-    /// Attempts to validate the SlideFile
-    /// This checks if the file
-    /// - actually exists
-    /// - can be read
-    /// - is a .md file
-    ///
-    /// # Returns
-    /// None
-    ///
-    /// # Errors
-    /// - If the slide file does not exist
-    /// - If the slide file is not a file
-    /// - If the slide file is not a markdown file
-    pub fn validate(&self) -> Result<(), ValidationError> {
-        if !self.path.is_absolute() {
-            return Err(ValidationError::new(
-                &self.path.display().to_string(),
-                "Path is not absolute".to_string(),
-            ));
-        }
-        if !self.path.exists() {
-            return Err(ValidationError::new(
-                &self.path.display().to_string(),
-                "File does not exist".to_string(),
-            ));
-        }
-        if !self.path.is_file() {
-            return Err(ValidationError::new(
-                &self.path.display().to_string(),
-                "Path is not a file".to_string(),
-            ));
-        }
-        if !is_markdown_file(&self.path) {
-            return Err(ValidationError::new(
-                &self.path.display().to_string(),
-                "File is not a markdown file".to_string(),
-            ));
-        }
-        Ok(())
-    }
-}
 
 /// Checks if the file at the given path has an extension of .md
 pub fn is_markdown_file(fp: &Path) -> bool {
@@ -127,9 +30,6 @@ pub fn find_slides(slide_dir: &PathBuf) -> Result<Vec<SlideFile>, anyhow::Error>
     let files = list_directory(slide_dir, true)?;
     let mut slide_files = SlideFile::from_paths(files)?;
     slide_files.sort();
-    for slide_file in &slide_files {
-        slide_file.validate()?;
-    }
     Ok(slide_files)
 }
 
@@ -162,6 +62,7 @@ mod test {
     use super::*;
     use std::fs::File;
     use tempfile::tempdir;
+    use crate::presentation::slide::SlideFile;
 
     #[test]
     fn test_is_markdown_file() {
@@ -187,18 +88,9 @@ mod test {
         assert_eq!(
             slides,
             vec![
-                SlideFile {
-                    filename: "1_slide1.md".to_string(),
-                    path: slide_file_1,
-                },
-                SlideFile {
-                    filename: "2_slide2.md".to_string(),
-                    path: slide_file_2,
-                },
-                SlideFile {
-                    filename: "3_slide3.md".to_string(),
-                    path: slide_file_3,
-                }
+                SlideFile::read_and_parse(slide_file_1).unwrap(),
+                SlideFile::read_and_parse(slide_file_2).unwrap(),
+                SlideFile::read_and_parse(slide_file_3).unwrap(),
             ]
         );
     }
