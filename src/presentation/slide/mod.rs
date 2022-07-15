@@ -137,7 +137,7 @@ impl SlideFile {
                 "Path is not a file".to_string(),
             ));
         }
-        if !is_markdown_file(&slide_file_path.as_ref()) {
+        if !is_markdown_file(slide_file_path.as_ref()) {
             return Err(ValidationError::new(
                 &slide_file_path.as_ref().display().to_string(),
                 "File is not a markdown file".to_string(),
@@ -172,7 +172,7 @@ mod test {
         assert_eq!(slide_file.local_images.len(), 1);
         assert_eq!(
             slide_file.local_images[0],
-            (PathBuf::from("/haha/local/image.png"), PathBuf::from(""))
+            PathBuf::from("/haha/local/image.png")
         );
     }
 }

@@ -2,10 +2,10 @@ use std::fs;
 
 use std::io::Error;
 
-use anyhow::Context;
+
 use std::path::{Path, PathBuf};
 
-use crate::errors::ValidationError;
+
 use crate::presentation::slide::SlideFile;
 use tracing::trace;
 

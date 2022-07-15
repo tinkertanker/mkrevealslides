@@ -3,9 +3,9 @@ use crate::presentation::slide::io::find_slides;
 use crate::presentation::slide::SlideFile;
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
-use anyhow::Context;
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+
+
+use std::path::{PathBuf};
 use std::{env, fs};
 use tera::Tera;
 use tracing::{debug, trace, warn};
@@ -103,7 +103,7 @@ impl PresentationConfig {
         fs::write(&output_path, output)?;
         println!("Slides written to `{}`", output_path.display());
 
-        for slide in &self.slides {
+        for _slide in &self.slides {
             todo!()
         }
         Ok(())
