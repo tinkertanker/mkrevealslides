@@ -1,14 +1,14 @@
-use std::collections::HashSet;
-use anyhow::Context;
-use std::{env, fs};
-use std::path::{Path, PathBuf};
-use tera::Tera;
-use tracing::{debug, trace, warn};
 use crate::errors::ArgumentError;
 use crate::presentation::slide::io::find_slides;
 use crate::presentation::slide::SlideFile;
 use crate::ui::cli::{CliArgs, Commands};
 use crate::ui::conf::PresentationConfigFile;
+use anyhow::Context;
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+use std::{env, fs};
+use tera::Tera;
+use tracing::{debug, trace, warn};
 
 pub mod slide;
 
@@ -188,7 +188,7 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
             output_directory: config.working_directory.join("output"), // todo: add config option to configure output dir
             template_file: config.working_directory.join(config.template_file),
             output_filename: config.output_file,
-            slides
+            slides,
         };
         cfg.validate()?;
         Ok(cfg)

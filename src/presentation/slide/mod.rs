@@ -1,15 +1,14 @@
 pub mod io;
 pub mod parsing;
 
+use crate::errors::ValidationError;
+use anyhow::Context;
 use std::cmp::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
-use anyhow::Context;
-use crate::errors::ValidationError;
 
 use crate::presentation::slide::io::is_markdown_file;
 use crate::presentation::slide::parsing::{get_local_links, grab_image_links};
-
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
 #[derive(PartialEq, Debug, Clone)]
@@ -20,7 +19,7 @@ pub struct SlideFile {
     /// Full contents of the SlideFile
     pub contents: String,
 
-    pub local_images: Vec<PathBuf>
+    pub local_images: Vec<PathBuf>,
 }
 
 impl PartialOrd for SlideFile {
@@ -66,7 +65,12 @@ impl SlideFile {
         let filename = path
             .as_ref()
             .file_name()
-            .with_context(|| format!("`{}` does not contain a valid filename", path.as_ref().display()))?
+            .with_context(|| {
+                format!(
+                    "`{}` does not contain a valid filename",
+                    path.as_ref().display()
+                )
+            })?
             .to_str()
             .with_context(|| format!("Filename at `{}` is not UTF-8!", path.as_ref().display()))?
             .to_string();
@@ -75,8 +79,12 @@ impl SlideFile {
 
         let local_images = get_local_links(&grab_image_links(&contents));
 
-        let sf = Self { filename, path: path.as_ref().to_path_buf(),
-            contents, local_images };
+        let sf = Self {
+            filename,
+            path: path.as_ref().to_path_buf(),
+            contents,
+            local_images,
+        };
         Ok(sf)
     }
 
@@ -162,7 +170,9 @@ mod test {
         let slide_file = SlideFile::read_and_parse(slide_file).unwrap();
         assert_eq!(slide_file.contents, slide_contents);
         assert_eq!(slide_file.local_images.len(), 1);
-        assert_eq!(slide_file.local_images[0],
-                   (PathBuf::from("/haha/local/image.png"), PathBuf::from("")));
+        assert_eq!(
+            slide_file.local_images[0],
+            (PathBuf::from("/haha/local/image.png"), PathBuf::from(""))
+        );
     }
 }

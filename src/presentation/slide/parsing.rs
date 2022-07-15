@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use pulldown_cmark::{Event, LinkType, Options, Parser, Tag};
+use std::path::PathBuf;
 
 /// Parses some markdown contents and only pulls out image links.
 ///

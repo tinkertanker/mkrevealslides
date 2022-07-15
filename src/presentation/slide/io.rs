@@ -6,9 +6,8 @@ use anyhow::Context;
 use std::path::{Path, PathBuf};
 
 use crate::errors::ValidationError;
-use tracing::trace;
 use crate::presentation::slide::SlideFile;
-
+use tracing::trace;
 
 /// Checks if the file at the given path has an extension of .md
 pub fn is_markdown_file(fp: &Path) -> bool {
@@ -60,9 +59,9 @@ fn list_directory<Pth: AsRef<Path>>(path: Pth, only_files: bool) -> Result<Vec<P
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::presentation::slide::SlideFile;
     use std::fs::File;
     use tempfile::tempdir;
-    use crate::presentation::slide::SlideFile;
 
     #[test]
     fn test_is_markdown_file() {
