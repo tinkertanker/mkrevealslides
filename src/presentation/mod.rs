@@ -122,7 +122,7 @@ impl PresentationConfig {
                 fs::create_dir_all(output_directory.join(img_dst_path.parent().expect("image to have a parent")))?;
                 debug!("Slide `{}`: Copying `{}` to `{}`",
                     slide.path.display(),
-                    img_src_path.display(), img_dst_path.display());
+                    img_src_path.display(), output_directory.join(img_dst_path).display());
                 fs::copy(img_src_path, output_directory.join(img_dst_path))?;
             }
         }

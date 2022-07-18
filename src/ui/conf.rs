@@ -70,7 +70,8 @@ mod test {
         let cfg_str = r#"
 title: "Test Presentation"
 slide_dir: "slides"
-output_file: "output.html"
+output_dir: "output/"
+output_file: "index.html"
 template_file: "template.html"
         "#;
         fs::create_dir(&tmp_dir.path().join("slides")).unwrap();
@@ -78,7 +79,8 @@ template_file: "template.html"
         let cfg = PresentationConfigFile::read_config_file(cfg_path).unwrap();
         assert_eq!(cfg.title, "Test Presentation");
         assert_eq!(cfg.slide_dir, PathBuf::from("slides"));
-        assert_eq!(cfg.output_file, PathBuf::from("output.html"));
+        assert_eq!(cfg.output_dir, PathBuf::from("output/"));
+        assert_eq!(cfg.output_file, PathBuf::from("index.html"));
         assert_eq!(cfg.template_file, PathBuf::from("template.html"));
         assert_eq!(
             cfg.working_dir,
