@@ -1,4 +1,5 @@
 # `mkrevealslides`
+*The rusty slide compiler*
 
 [![Rust](https://github.com/tinkertanker/mkrevealslides/actions/workflows/rust.yml/badge.svg)](https://github.com/tinkertanker/mkrevealslides/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/gh/tinkertanker/mkrevealslides/branch/master/graph/badge.svg?token=YZ12W93CCX)](https://codecov.io/gh/tinkertanker/mkrevealslides)
