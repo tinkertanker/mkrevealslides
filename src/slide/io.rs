@@ -19,7 +19,7 @@ pub struct SlideFile {
 
 impl PartialOrd for SlideFile {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.filename.partial_cmp(&other.filename)
+        Some(natord::compare(&self.filename, &other.filename))
     }
 }
 
@@ -226,5 +226,86 @@ mod test {
             file_names,
             vec![PathBuf::from("file4.txt"), PathBuf::from("file_no_ext")]
         );
+    }
+
+    macro_rules! sf {
+        ($filename:expr) => {
+            SlideFile {
+                filename: $filename.to_string(),
+                path: PathBuf::from($filename),
+            }
+        }
+    }
+
+    macro_rules! list_of_slides {
+        ($($filename:expr),*) => {
+            vec![
+                $(sf!($filename)),*
+            ]
+        }
+    }
+
+    #[test]
+    fn test_slide_sorting() {
+        let mut big_mess = list_of_slides!(
+            "16.md",
+            "6.md",
+            "9a.md",
+            "15.md",
+            "2.md",
+            "3.md",
+            "10.md",
+            "4.md",
+            "5a.md",
+            "8.md",
+            "9.md",
+            "17.md",
+            "18.md",
+            "0.md",
+            "1.md",
+            "7.md",
+            "13.md",
+            "11.md",
+            "5.md",
+            "14a.md",
+            "14.md",
+            "2a.md",
+            "12.md"
+        );
+        let slides = list_of_slides!(
+            "0.md",
+            "1.md",
+            "2.md",
+            "2a.md",
+            "3.md",
+            "4.md",
+            "5.md",
+            "5a.md",
+            "6.md",
+            "7.md",
+            "8.md",
+            "9.md",
+            "9a.md",
+            "10.md",
+            "11.md",
+            "12.md",
+            "13.md",
+            "14.md",
+            "14a.md",
+            "15.md",
+            "16.md",
+            "17.md",
+            "18.md"
+        );
+
+        let mut sorted_slides = slides.clone();
+        sorted_slides.sort();
+
+        assert_eq!(slides, sorted_slides);
+
+        assert_eq!(slides.len(), big_mess.len());
+
+        big_mess.sort();
+        assert_eq!(slides, big_mess)
     }
 }
