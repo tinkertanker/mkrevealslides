@@ -16,8 +16,7 @@ In rough order of priority
 - [x] Configuration file support
     - [x] Force paths relative to config file dir instead of invocation dir
 - [x] Support markdown images
-  - Currently will only allow you to place images in directories and subdirectories of `img/` (see examples)
-  - [ ] Allow the program to modify markdown file paths for correct resolution 
+  - [x] Allow the program to modify markdown file paths for correct resolution 
 - [x] Support slide 1a, 1b etc.
 - [ ] Generate zip file with revealJS deps
 - [ ] Automatically download revealJS if not present 
