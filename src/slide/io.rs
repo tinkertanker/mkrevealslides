@@ -25,7 +25,7 @@ impl PartialOrd for SlideFile {
 
 impl Ord for SlideFile {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.filename.cmp(&other.filename)
+        natord::compare(&self.filename, &other.filename)
     }
 }
 
