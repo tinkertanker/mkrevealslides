@@ -1,4 +1,5 @@
 title: "Demo Slides"
 slide_dir: "input/"
-output_file: "output/index.html"
+output_directory: "output/"
+output_file: "index.html"
 template_file: "../../templates/slides.html"

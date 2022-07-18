@@ -21,6 +21,7 @@ pub struct PresentationConfig {
     /// Title of the presentation
     pub title: String,
     /// Output directory of the presentation
+    ///
     /// Needs to exist
     // todo: support directories that don't yet exist
     pub output_directory: PathBuf,
@@ -101,15 +102,31 @@ impl PresentationConfig {
     ///
     /// Optionally, downloads revealJS libs and generates the zip too
     pub fn package(&self) -> Result<(), anyhow::Error> {
+        // todo: clean up code here
         let output = self.render()?;
         debug!("Rendered {} bytes", output.len());
-        let output_path = self.output_directory.join(&self.output_filename);
+        trace!("Output dir: `{}`", self.output_directory.display());
+        trace!("Attempting to create output_directory at `{}`, if it does not exist", &self.output_directory.display());
+        fs::create_dir_all(&self.output_directory)?;
+        let output_directory = fs::canonicalize(&self.output_directory)?;
+        let output_path = output_directory.join(&self.output_filename);
+
         debug!("Writing to `{}`", output_path.display());
         fs::write(&output_path, output)?;
         println!("Slides written to `{}`", output_path.display());
 
-        for _slide in &self.slides {
-            todo!()
+        for slide in &self.slides {
+            if slide.local_images.is_empty() {
+                continue;
+            }
+            for (img_src_path, img_dst_path) in &slide.local_images {
+                // src is absolute, dst is relative to output directory
+                fs::create_dir_all(output_directory.join(img_dst_path.parent().expect("image to have a parent")))?;
+                debug!("Slide `{}`: Copying `{}` to `{}`",
+                    slide.path.display(),
+                    img_src_path.display(), img_dst_path.display());
+                fs::copy(img_src_path, output_directory.join(img_dst_path))?;
+            }
         }
         Ok(())
     }
@@ -190,7 +207,7 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
 
         let cfg = PresentationConfig {
             title: config.title,
-            output_directory: config.working_directory.join("output"), // todo: add config option to configure output dir
+            output_directory: config.working_directory.join(config.output_directory),
             template_file: config.working_directory.join(config.template_file),
             output_filename: config.output_file,
             slides,

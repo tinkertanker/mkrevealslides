@@ -10,7 +10,10 @@ pub struct PresentationConfigFile {
     pub title: String,
     /// Slide directory relative to the directory of the config file
     pub slide_dir: PathBuf,
-    /// Output file relative to the directory of the config file
+    /// Output directory relative to the directory of the config file
+    /// Does not need to exist
+    pub output_directory: PathBuf,
+    /// Output filename with extension
     pub output_file: PathBuf,
     /// Template file relative to the directory of the config file
     pub template_file: PathBuf,
