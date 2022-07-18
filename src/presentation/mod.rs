@@ -20,11 +20,9 @@ pub mod io;
 pub struct PresentationConfig {
     /// Title of the presentation
     pub title: String,
-    /// Output directory of the presentation
-    ///
-    /// Needs to exist
-    // todo: support directories that don't yet exist
-    pub output_directory: PathBuf,
+    /// Output directory of the presentation.
+    /// Does not need to exist if using `package()`
+    pub output_dir: PathBuf,
     /// Output filename of the final presentation file, with extension
     pub output_filename: PathBuf,
     /// Absolute path to the template file
@@ -44,7 +42,7 @@ impl PresentationConfig {
         trace!("Checking output_file");
         // todo:
 
-        let output_file = self.output_directory.join(&self.output_filename);
+        let output_file = self.output_dir.join(&self.output_filename);
 
         // does it exist and is it a file?
         if output_file.is_file() {
@@ -105,10 +103,10 @@ impl PresentationConfig {
         // todo: clean up code here
         let output = self.render()?;
         debug!("Rendered {} bytes", output.len());
-        trace!("Output dir: `{}`", self.output_directory.display());
-        trace!("Attempting to create output_directory at `{}`, if it does not exist", &self.output_directory.display());
-        fs::create_dir_all(&self.output_directory)?;
-        let output_directory = fs::canonicalize(&self.output_directory)?;
+        trace!("Output dir: `{}`", self.output_dir.display());
+        trace!("Attempting to create output_directory at `{}`, if it does not exist", &self.output_dir.display());
+        fs::create_dir_all(&self.output_dir)?;
+        let output_directory = fs::canonicalize(&self.output_dir)?;
         let output_path = output_directory.join(&self.output_filename);
 
         debug!("Writing to `{}`", output_path.display());
@@ -161,7 +159,7 @@ impl TryFrom<CliArgs> for PresentationConfig {
                 let slides = find_slides(&cwd.join(slide_dir))?;
                 let cfg = PresentationConfig {
                     title: slide_title,
-                    output_directory: cwd.join(output_dir),
+                    output_dir: cwd.join(output_dir),
                     output_filename: output_file,
                     template_file: cwd.join(template_file),
                     slides,
@@ -207,7 +205,7 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
 
         let cfg = PresentationConfig {
             title: config.title,
-            output_directory: config.working_dir.join(config.output_dir),
+            output_dir: config.working_dir.join(config.output_dir),
             template_file: config.working_dir.join(config.template_file),
             output_filename: config.output_file,
             slides,
