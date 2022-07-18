@@ -17,10 +17,8 @@
 <div class="reveal">
     <div class="slides">
         {% for file_contents in ingested_files %}
-        <section data-markdown>
-            <textarea data-template>
-                {{ file_contents }}
-            </textarea>
+        <section>
+            {{ file_contents }}
         </section>
         {% endfor %}
     </div>

@@ -7,8 +7,10 @@ The config file schema is as follows
 ```yaml
 title: "Demo Slides"
 # These paths are all relative to the directory containing the config file
+# unless otherwise specified
 slide_dir: "input/"
-output_file: "output/index.html"
+output_dir: "output"
+output_file: "index.html" # relative to output dir!
 template_file: "../../templates/slides.html"
 include_files:
   # include_files are relative to the slide_dir
