@@ -1,13 +1,11 @@
-pub mod parsing;
-
 use crate::errors::ValidationError;
 use anyhow::Context;
 use std::cmp::Ordering;
 use std::fs;
 use std::path::{Path, PathBuf};
+use pulldown_cmark::{Event, html, Options, Parser, Tag};
 
 use crate::presentation::io::is_markdown_file;
-use crate::presentation::slide::parsing::{get_local_links, grab_image_links};
 
 /// A SlideFile is a slide that exists as a file on the disk somewhere
 #[derive(PartialEq, Debug, Clone)]
@@ -18,7 +16,7 @@ pub struct SlideFile {
     /// Full contents of the SlideFile
     pub contents: String,
 
-    pub local_images: Vec<PathBuf>,
+    pub local_images: Vec<(PathBuf, PathBuf)>,
 }
 
 impl PartialOrd for SlideFile {
@@ -61,26 +59,63 @@ impl SlideFile {
     /// This is a blocking operation since it will read the file from the disk
     /// and attempt to parse it.
     pub fn read_and_parse<P: AsRef<Path>>(path: P) -> Result<Self, anyhow::Error> {
+
+        let path = path.as_ref().to_path_buf();
         let filename = path
-            .as_ref()
             .file_name()
             .with_context(|| {
                 format!(
                     "`{}` does not contain a valid filename",
-                    path.as_ref().display()
+                    path.display()
                 )
             })?
             .to_str()
-            .with_context(|| format!("Filename at `{}` is not UTF-8!", path.as_ref().display()))?
+            .with_context(|| format!("Filename at `{}` is not UTF-8!", path.display()))?
             .to_string();
-        SlideFile::validate_path(&path)?;
+        Self::validate_path(&path)?;
         let contents = fs::read_to_string(&path)?;
+        let mut local_images = Vec::new();
 
-        let local_images = get_local_links(&grab_image_links(&contents));
+        let parser = Parser::new_ext(&contents, Options::all());
+        let parser = parser.map(|event| match event {
+            Event::Start(Tag::Image(link_type, url, title)) => {
+                // check if the image is local
+                if !url.contains("://") {
+                    let img_path = PathBuf::from(url.as_ref());
+                    let img_abs_path = if !img_path.is_absolute() {
+                        let img_abs_path = fs::canonicalize(path.parent()
+                            .expect("slide file to have parent")
+                            .join(img_path))
+                            .expect("img path to exist");
+                        img_abs_path
+                    } else {
+                        img_path
+                    };
+                    // this is a local image, let's grab the full path to it
+                    let img_filename = img_abs_path.file_name()
+                        .expect("image to have a valid file name");
+                    // todo: this will BREAK if there are other images with the same name, best to use a hash
+                    // the destination path is ./img/<slide filename>/<img filename>
+                    let dst_path = PathBuf::from("./img")
+                        .join(&filename)
+                        .join(img_filename)
+                        .to_str().expect("can convert to string").to_string();
+                    local_images.push((img_abs_path, PathBuf::from(&dst_path)));
+                    Event::Start(Tag::Image(link_type, dst_path.into(), title))
+                } else {
+                    // don't rewrite the link
+                    Event::Start(Tag::Image(link_type, url, title))
+                }
+            },
+            _ => event
+        });
+
+        let mut contents = String::new();
+        html::push_html(&mut contents, parser);
 
         let sf = Self {
             filename,
-            path: path.as_ref().to_path_buf(),
+            path,
             contents,
             local_images,
         };
@@ -167,11 +202,11 @@ mod test {
         let _h_local_img = File::create(&local_img).unwrap();
 
         let slide_file = SlideFile::read_and_parse(slide_file).unwrap();
-        assert_eq!(slide_file.contents, slide_contents);
+        assert_eq!(slide_file.contents, "<p><img src=\"./img/slide.md/image.png\" alt=\"oh no an image\" /></p>\n");
         assert_eq!(slide_file.local_images.len(), 1);
         assert_eq!(
             slide_file.local_images[0],
-            PathBuf::from("/haha/local/image.png")
+            (local_img, PathBuf::from("./img/slide.md/image.png"))
         );
     }
 }

@@ -83,13 +83,13 @@ impl PresentationConfig {
         let mut ctx = tera::Context::new();
         let template = fs::read_to_string(&self.template_file)?;
 
-        // let slide_contents = self
-        //     .slides
-        //     .iter()
-        //     .map(| s| s.contents)
-        //     .collect::<Vec<String>>();
+        let slide_contents = self
+            .slides
+            .iter()
+            .map(| s| &s.contents)
+            .collect::<Vec<&String>>();
         ctx.insert("slide_title", &self.title);
-        // ctx.insert("ingested_files", &slide_contents);
+        ctx.insert("ingested_files", &slide_contents);
 
         let result = Tera::one_off(&template, &ctx, false);
         trace!("Render template succeeded: {}", result.is_ok());
