@@ -21,14 +21,13 @@ pub struct SlideFile {
 
 impl PartialOrd for SlideFile {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // todo: natural sorting
-        self.filename.partial_cmp(&other.filename)
+        Some(natord::compare(&self.filename, &other.filename))
     }
 }
 
 impl Ord for SlideFile {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.filename.cmp(&other.filename)
+        natord::compare(&self.filename, &other.filename)
     }
 }
 
