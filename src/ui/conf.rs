@@ -4,6 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 use tracing::trace;
 
+// todo: support defaults for slide_dir, output_directory and output_file
 /// A PresentationConfigFile which has been deserialized
 #[derive(Debug, Deserialize)]
 pub struct PresentationConfigFile {
@@ -12,18 +13,17 @@ pub struct PresentationConfigFile {
     pub slide_dir: PathBuf,
     /// Output directory relative to the directory of the config file
     /// Does not need to exist
-    pub output_directory: PathBuf,
+    pub output_dir: PathBuf,
     /// Output filename with extension
     pub output_file: PathBuf,
     /// Template file relative to the directory of the config file
     pub template_file: PathBuf,
-
     /// Include files relative to the directory of the config file
     #[serde(default)]
     pub include_files: Vec<PathBuf>,
     #[serde(skip)]
     /// Absolute path of the directory containing the config file
-    pub working_directory: PathBuf,
+    pub working_dir: PathBuf,
 }
 
 impl PresentationConfigFile {
@@ -52,7 +52,7 @@ impl PresentationConfigFile {
         let mut config: Self = serde_yaml::from_str(&config_str)?;
 
         let p_dir = fs::canonicalize(config_parent_dir)?;
-        config.working_directory = p_dir;
+        config.working_dir = p_dir;
         Ok(config)
     }
 }
@@ -81,7 +81,7 @@ template_file: "template.html"
         assert_eq!(cfg.output_file, PathBuf::from("output.html"));
         assert_eq!(cfg.template_file, PathBuf::from("template.html"));
         assert_eq!(
-            cfg.working_directory,
+            cfg.working_dir,
             fs::canonicalize(tmp_dir.path()).unwrap()
         );
     }

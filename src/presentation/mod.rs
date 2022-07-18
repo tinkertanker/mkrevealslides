@@ -185,7 +185,7 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
             .iter()
             .map(|relative_pth| {
                 config
-                    .working_directory
+                    .working_dir
                     .join(&config.slide_dir)
                     .join(relative_pth)
             })
@@ -196,7 +196,7 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
         );
         let slides = if include_files_abs_paths.is_empty() {
             // let's try to search for slides
-            find_slides(&config.working_directory.join(config.slide_dir))?
+            find_slides(&config.working_dir.join(config.slide_dir))?
         } else {
             let sf = include_files_abs_paths
                 .iter()
@@ -207,8 +207,8 @@ impl TryFrom<PresentationConfigFile> for PresentationConfig {
 
         let cfg = PresentationConfig {
             title: config.title,
-            output_directory: config.working_directory.join(config.output_directory),
-            template_file: config.working_directory.join(config.template_file),
+            output_directory: config.working_dir.join(config.output_dir),
+            template_file: config.working_dir.join(config.template_file),
             output_filename: config.output_file,
             slides,
         };
